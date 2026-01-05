@@ -55,9 +55,27 @@ class AuthController {
             return;
         }
         
-        // Paso 1: Devolver vehículos disponibles
+        // Paso 1: Devolver vehículos disponibles (solo para conductores)
         if ($step === '1') {
-            // Guardar datos temporales en sesión
+            // Verificar si es administrador
+            if ($datosUsuario['rol_id'] == 2) {
+                // Administrador: crear sesión sin vehículo
+                $_SESSION['usuario_id'] = $datosUsuario['id'];
+                $_SESSION['usuario'] = $datosUsuario['usuario'];
+                $_SESSION['nombre_completo'] = $datosUsuario['nombre'] . ' ' . $datosUsuario['apellido'];
+                $_SESSION['rol_id'] = $datosUsuario['rol_id'];
+                $_SESSION['tiempo_login'] = time();
+                
+                $this->responderJSON([
+                    'success' => true,
+                    'message' => '¡Bienvenido Administrador!',
+                    'es_admin' => true,
+                    'redirect' => APP_URL . '/public/dashboard.php'
+                ]);
+                return;
+            }
+            
+            // Conductor: guardar datos temporales y devolver vehículos
             $_SESSION['temp_usuario'] = $datosUsuario;
             
             // Obtener vehículos disponibles
@@ -66,6 +84,7 @@ class AuthController {
             $this->responderJSON([
                 'success' => true,
                 'message' => 'Credenciales válidas',
+                'es_admin' => false,
                 'vehiculos' => $vehiculos
             ]);
             return;

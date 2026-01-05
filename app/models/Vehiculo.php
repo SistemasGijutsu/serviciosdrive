@@ -78,4 +78,95 @@ class Vehiculo {
             return false;
         }
     }
+    
+    /**
+     * Obtener todos los vehículos (incluye inactivos)
+     */
+    public function obtenerTodos() {
+        try {
+            $query = "SELECT id, placa, marca, modelo, anio, color, tipo, kilometraje, activo, fecha_registro 
+                      FROM {$this->table} 
+                      ORDER BY fecha_registro DESC";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener vehículos: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Crear nuevo vehículo
+     */
+    public function crear($datos) {
+        try {
+            $query = "INSERT INTO {$this->table} 
+                      (placa, marca, modelo, anio, color, tipo, kilometraje) 
+                      VALUES (:placa, :marca, :modelo, :anio, :color, :tipo, :kilometraje)";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':placa', $datos['placa']);
+            $stmt->bindParam(':marca', $datos['marca']);
+            $stmt->bindParam(':modelo', $datos['modelo']);
+            $stmt->bindParam(':anio', $datos['anio']);
+            $stmt->bindParam(':color', $datos['color']);
+            $stmt->bindParam(':tipo', $datos['tipo']);
+            $stmt->bindParam(':kilometraje', $datos['kilometraje']);
+            
+            if ($stmt->execute()) {
+                return $this->db->lastInsertId();
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("Error al crear vehículo: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Actualizar vehículo
+     */
+    public function actualizar($id, $datos) {
+        try {
+            $query = "UPDATE {$this->table} 
+                      SET placa = :placa, marca = :marca, modelo = :modelo, 
+                          anio = :anio, color = :color, tipo = :tipo, 
+                          kilometraje = :kilometraje, activo = :activo
+                      WHERE id = :id";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':placa', $datos['placa']);
+            $stmt->bindParam(':marca', $datos['marca']);
+            $stmt->bindParam(':modelo', $datos['modelo']);
+            $stmt->bindParam(':anio', $datos['anio']);
+            $stmt->bindParam(':color', $datos['color']);
+            $stmt->bindParam(':tipo', $datos['tipo']);
+            $stmt->bindParam(':kilometraje', $datos['kilometraje']);
+            $stmt->bindParam(':activo', $datos['activo']);
+            
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al actualizar vehículo: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Eliminar vehículo (soft delete)
+     */
+    public function eliminar($id) {
+        try {
+            $query = "UPDATE {$this->table} SET activo = 0 WHERE id = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id', $id);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al eliminar vehículo: " . $e->getMessage());
+            return false;
+        }
+    }
 }

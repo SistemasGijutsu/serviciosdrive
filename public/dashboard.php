@@ -9,7 +9,8 @@ $auth = new AuthController();
 $auth->verificarAutenticacion();
 
 $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
-$vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'No asignado';
+$vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'Sin vehículo asignado';
+$esAdmin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -35,7 +36,7 @@ $vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'No asignado';
             <div class="user-avatar">👤</div>
             <div class="user-info">
                 <strong><?= htmlspecialchars($nombreUsuario) ?></strong>
-                <small><?= htmlspecialchars($vehiculoInfo) ?></small>
+                <small><?= $esAdmin ? '🔑 Administrador' : htmlspecialchars($vehiculoInfo) ?></small>
             </div>
         </div>
         
@@ -44,14 +45,36 @@ $vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'No asignado';
                 <span class="nav-icon">📊</span>
                 <span class="nav-text">Dashboard</span>
             </a>
-            <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
-                <span class="nav-icon">📝</span>
-                <span class="nav-text">Registrar Servicio</span>
-            </a>
-            <a href="<?= APP_URL ?>/public/historial.php" class="nav-link">
-                <span class="nav-icon">📋</span>
-                <span class="nav-text">Historial</span>
-            </a>
+            
+            <?php if ($esAdmin): ?>
+                <!-- Menú Administrador -->
+                <a href="<?= APP_URL ?>/public/admin/usuarios.php" class="nav-link">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Usuarios</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/admin/vehiculos.php" class="nav-link">
+                    <span class="nav-icon">🚗</span>
+                    <span class="nav-text">Vehículos</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/admin/servicios.php" class="nav-link">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Todos los Servicios</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/admin/reportes.php" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reportes</span>
+                </a>
+            <?php else: ?>
+                <!-- Menú Conductor -->
+                <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
+                    <span class="nav-icon">📝</span>
+                    <span class="nav-text">Registrar Servicio</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/historial.php" class="nav-link">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Historial</span>
+                </a>
+            <?php endif; ?>
             <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
                 <span class="nav-icon">🚪</span>
                 <span class="nav-text">Cerrar Sesión</span>
@@ -67,13 +90,13 @@ $vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'No asignado';
     <main class="main-content" id="mainContent">
         <div class="dashboard-header">
             <h1>📊 Dashboard</h1>
-            <p class="text-muted">Bienvenido al sistema de control vehicular</p>
+            <p class="text-muted"><?= $esAdmin ? 'Panel de Administración' : 'Bienvenido al sistema de control vehicular' ?></p>
         </div>
         
         <div class="dashboard-empty">
-            <div class="empty-icon">📦</div>
-            <h3>Panel de Control</h3>
-            <p>Aquí iremos agregando las opciones del sistema</p>
+            <div class="empty-icon"><?= $esAdmin ? '⚙️' : '📦' ?></div>
+            <h3><?= $esAdmin ? 'Panel de Administración' : 'Panel de Control' ?></h3>
+            <p><?= $esAdmin ? 'Gestiona usuarios, vehículos y servicios del sistema' : 'Aquí iremos agregando las opciones del sistema' ?></p>
         </div>
     </main>
     

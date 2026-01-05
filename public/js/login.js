@@ -40,7 +40,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const data = await response.json();
                     
                     if (data.success) {
-                        // Credenciales válidas, mostrar selector de vehículos
+                        // Verificar si es administrador
+                        if (data.es_admin) {
+                            mostrarMensaje(data.message, 'success');
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 500);
+                            return;
+                        }
+                        
+                        // Credenciales válidas para conductor, mostrar selector de vehículos
                         mostrarMensaje('✓ Credenciales correctas. Selecciona tu vehículo.', 'success');
                         
                         // Cargar vehículos
