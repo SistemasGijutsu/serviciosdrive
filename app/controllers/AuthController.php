@@ -1,0 +1,167 @@
+<?php
+// No iniciar sesión aquí, se maneja en los archivos públicos
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../models/Vehiculo.php';
+require_once __DIR__ . '/../models/SesionTrabajo.php';
+
+class AuthController {
+    private $usuarioModel;
+    private $vehiculoModel;
+    private $sesionTrabajoModel;
+    
+    public function __construct() {
+        $this->usuarioModel = new Usuario();
+        $this->vehiculoModel = new Vehiculo();
+        $this->sesionTrabajoModel = new SesionTrabajo();
+    }
+    
+    /**
+     * Mostrar formulario de login
+     */
+    public function mostrarLogin() {
+        // Si ya hay sesión activa, redirigir al dashboard
+        if (isset($_SESSION['usuario_id'])) {
+            header('Location: ' . APP_URL . '/public/dashboard.php');
+            exit;
+        }
+        
+        require_once __DIR__ . '/../views/login.php';
+    }
+    
+    /**
+     * Procesar login en dos pasos
+     */
+    public function procesarLogin() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
+            return;
+        }
+        
+        $usuario = $_POST['usuario'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $step = $_POST['step'] ?? '1';
+        
+        if (empty($usuario) || empty($password)) {
+            $this->responderJSON(['success' => false, 'message' => 'Usuario y contraseña son requeridos']);
+            return;
+        }
+        
+        // Validar credenciales
+        $datosUsuario = $this->usuarioModel->login($usuario, $password);
+        
+        if (!$datosUsuario) {
+            $this->responderJSON(['success' => false, 'message' => 'Usuario o contraseña incorrectos']);
+            return;
+        }
+        
+        // Paso 1: Devolver vehículos disponibles
+        if ($step === '1') {
+            // Guardar datos temporales en sesión
+            $_SESSION['temp_usuario'] = $datosUsuario;
+            
+            // Obtener vehículos disponibles
+            $vehiculos = $this->vehiculoModel->obtenerActivos();
+            
+            $this->responderJSON([
+                'success' => true,
+                'message' => 'Credenciales válidas',
+                'vehiculos' => $vehiculos
+            ]);
+            return;
+        }
+        
+        // Paso 2: Crear sesión de trabajo
+        if ($step === '2') {
+            $vehiculo_id = $_POST['vehiculo_id'] ?? '';
+            
+            if (empty($vehiculo_id)) {
+                $this->responderJSON(['success' => false, 'message' => 'Debe seleccionar un vehículo']);
+                return;
+            }
+            
+            // Verificar datos temporales
+            if (!isset($_SESSION['temp_usuario'])) {
+                $this->responderJSON(['success' => false, 'message' => 'Sesión expirada. Intente nuevamente.']);
+                return;
+            }
+            
+            $datosUsuario = $_SESSION['temp_usuario'];
+            
+            // Verificar que el vehículo existe
+            $vehiculo = $this->vehiculoModel->obtenerPorId($vehiculo_id);
+            if (!$vehiculo || $vehiculo['activo'] != 1) {
+                $this->responderJSON(['success' => false, 'message' => 'El vehículo seleccionado no está disponible']);
+                return;
+            }
+            
+            // Crear sesión de trabajo
+            $sesion_id = $this->sesionTrabajoModel->iniciarSesion($datosUsuario['id'], $vehiculo_id);
+            
+            if ($sesion_id) {
+                // Crear sesión de usuario
+                $_SESSION['usuario_id'] = $datosUsuario['id'];
+                $_SESSION['usuario'] = $datosUsuario['usuario'];
+                $_SESSION['nombre_completo'] = $datosUsuario['nombre'] . ' ' . $datosUsuario['apellido'];
+                $_SESSION['vehiculo_id'] = $vehiculo_id;
+                $_SESSION['vehiculo_info'] = $vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa'];
+                $_SESSION['sesion_trabajo_id'] = $sesion_id;
+                $_SESSION['tiempo_login'] = time();
+                
+                // Limpiar datos temporales
+                unset($_SESSION['temp_usuario']);
+                
+                $this->responderJSON([
+                    'success' => true,
+                    'message' => '¡Bienvenido! Sesión iniciada correctamente',
+                    'redirect' => APP_URL . '/public/dashboard.php'
+                ]);
+            } else {
+                $this->responderJSON(['success' => false, 'message' => 'No se pudo iniciar la sesión de trabajo']);
+            }
+        }
+    }
+    
+    /**
+     * Cerrar sesión
+     */
+    public function logout() {
+        // Finalizar sesión de trabajo si existe
+        if (isset($_SESSION['sesion_trabajo_id'])) {
+            $this->sesionTrabajoModel->finalizarSesion($_SESSION['sesion_trabajo_id']);
+        }
+        
+        session_destroy();
+        header('Location: ' . APP_URL . '/public/index.php');
+        exit;
+    }
+    
+    /**
+     * Verificar si el usuario está autenticado
+     */
+    public function verificarAutenticacion() {
+        if (!isset($_SESSION['usuario_id'])) {
+            header('Location: ' . APP_URL . '/public/index.php');
+            exit;
+        }
+        
+        // Verificar timeout de sesión
+        if (isset($_SESSION['tiempo_login'])) {
+            $tiempoTranscurrido = time() - $_SESSION['tiempo_login'];
+            if ($tiempoTranscurrido > SESSION_LIFETIME) {
+                $this->logout();
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Responder con JSON
+     */
+    private function responderJSON($data) {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+}

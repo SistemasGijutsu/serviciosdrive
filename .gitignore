@@ -1,0 +1,28 @@
+# Archivos de configuración sensibles
+config/config.php
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
+
+# Directorio de vendor (si usas Composer)
+vendor/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de base de datos local
+*.sql.backup
+actualizar-passwords.php
+generar-passwords.php
+
+# Node modules (si usas npm)
+node_modules/
