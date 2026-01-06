@@ -1199,3 +1199,49 @@ body {
     color: #64748b;
 }
 
+/* ===================================
+   FORMULARIO REGISTRAR SERVICIO - DISEÑO EJECUTIVO
+   =================================== */
+#formRegistrarServicio input:focus,
+#formRegistrarServicio select:focus,
+#formRegistrarServicio textarea:focus {
+    outline: none;
+    border-color: #667eea !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1) !important;
+    transform: translateY(-2px);
+}
+
+#formRegistrarServicio input:hover,
+#formRegistrarServicio select:hover,
+#formRegistrarServicio textarea:hover {
+    border-color: #cbd5e1;
+}
+
+#formRegistrarServicio button[type="submit"]:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5) !important;
+}
+
+#formRegistrarServicio a[href*="dashboard"]:hover {
+    background: #e2e8f0;
+    color: #475569;
+    transform: translateY(-2px);
+}
+
+/* Responsive para formulario */
+@media (max-width: 768px) {
+    #formRegistrarServicio div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #formRegistrarServicio .form-actions {
+        flex-direction: column !important;
+    }
+    
+    #formRegistrarServicio button[type="submit"],
+    #formRegistrarServicio a[href*="dashboard"] {
+        flex: 1 !important;
+    }
+}

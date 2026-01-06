@@ -40,16 +40,29 @@ self.addEventListener('activate', event => {
 
 // Fetch - Estrategia Network First, fallback a Cache
 self.addEventListener('fetch', event => {
+  // No cachear peticiones POST ni API calls
+  if (event.request.method !== 'GET' || event.request.url.includes('action=')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
   event.respondWith(
     fetch(event.request)
       .then(response => {
+        // Solo cachear respuestas exitosas
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
+        }
+        
         // Clonar la respuesta
         const responseClone = response.clone();
         
-        // Guardar en caché
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
-        });
+        // Guardar en caché solo recursos estáticos
+        if (event.request.url.match(/\.(css|js|png|jpg|jpeg|gif|svg|woff|woff2|ttf)$/)) {
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+        }
         
         return response;
       })

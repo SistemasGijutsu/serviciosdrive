@@ -4,7 +4,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // Formulario para nuevo servicio
-    const formNuevo = document.getElementById('formNuevoServicio');
+    const formNuevo = document.getElementById('formNuevoServicio') || document.getElementById('formRegistrarServicio');
     if (formNuevo) {
         formNuevo.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setButtonLoading(btnSubmit, true);
             
             try {
-                const response = await fetch('/serviciosdrive/public/registrar-servicio.php?action=crear', {
+                const response = await fetch(this.action, {
                     method: 'POST',
                     body: new URLSearchParams(formData)
                 });
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     mostrarMensaje(data.message, 'success');
                     setTimeout(() => {
                         window.location.href = data.redirect;
-                    }, 500);
+                    }, 800);
                 } else {
                     mostrarMensaje(data.message, 'error');
                     setButtonLoading(btnSubmit, false);
@@ -42,41 +42,49 @@ document.addEventListener('DOMContentLoaded', function() {
     // Formulario para finalizar servicio
     const formFinalizar = document.getElementById('formFinalizarServicio');
     if (formFinalizar) {
+        console.log('Formulario de finalización encontrado');
+        
         formFinalizar.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            if (!confirm('¿Estás seguro de finalizar este servicio?')) {
-                return;
-            }
+            console.log('Submit interceptado, procesando...');
             
             const formData = new FormData(this);
             const btnSubmit = this.querySelector('button[type="submit"]');
             
+            console.log('Form data:', Object.fromEntries(formData));
+            console.log('Action URL:', this.action);
+            
             setButtonLoading(btnSubmit, true);
             
             try {
-                const response = await fetch('/serviciosdrive/public/registrar-servicio.php?action=finalizar', {
+                console.log('Enviando petición POST...');
+                const response = await fetch(this.action, {
                     method: 'POST',
                     body: new URLSearchParams(formData)
                 });
                 
+                console.log('Respuesta recibida:', response.status);
                 const data = await response.json();
+                console.log('JSON parseado:', data);
                 
                 if (data.success) {
                     mostrarMensaje(data.message, 'success');
+                    console.log('Redirigiendo a:', data.redirect);
                     setTimeout(() => {
                         window.location.href = data.redirect;
-                    }, 500);
+                    }, 800);
                 } else {
                     mostrarMensaje(data.message, 'error');
                     setButtonLoading(btnSubmit, false);
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error completo:', error);
                 mostrarMensaje('Error al conectar con el servidor', 'error');
                 setButtonLoading(btnSubmit, false);
             }
         });
+    } else {
+        console.log('Formulario de finalización NO encontrado');
     }
     
     // Autocompletar campos comunes (localStorage)

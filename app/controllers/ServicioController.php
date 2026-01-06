@@ -99,12 +99,19 @@ class ServicioController {
      * Finalizar servicio activo
      */
     public function finalizar() {
+        error_log("=== CONTROLADOR FINALIZAR ===");
+        error_log("Método REQUEST: " . $_SERVER['REQUEST_METHOD']);
+        error_log("POST data: " . print_r($_POST, true));
+        error_log("Usuario ID session: " . ($_SESSION['usuario_id'] ?? 'NO DEFINIDO'));
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
             return;
         }
         
         $servicioActivo = $this->servicioModel->obtenerServicioActivo($_SESSION['usuario_id']);
+        
+        error_log("Servicio activo encontrado: " . print_r($servicioActivo, true));
         
         if (!$servicioActivo) {
             $this->responderJSON(['success' => false, 'message' => 'No hay servicio activo']);
@@ -117,14 +124,18 @@ class ServicioController {
             'notas' => $_POST['notas'] ?? ''
         ];
         
+        error_log("Datos preparados para finalizar: " . print_r($datos, true));
+        
         if ($this->servicioModel->finalizar($servicioActivo['id'], $datos)) {
             unset($_SESSION['servicio_activo_id']);
+            error_log("Servicio finalizado correctamente, respondiendo success=true");
             $this->responderJSON([
                 'success' => true,
                 'message' => 'Servicio finalizado correctamente',
                 'redirect' => APP_URL . '/public/dashboard.php'
             ]);
         } else {
+            error_log("Modelo retornó FALSE, respondiendo error");
             $this->responderJSON(['success' => false, 'message' => 'Error al finalizar servicio']);
         }
     }

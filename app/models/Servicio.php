@@ -46,27 +46,59 @@ class Servicio {
      */
     public function finalizar($servicio_id, $datos) {
         try {
+            error_log("=== FINALIZANDO SERVICIO ===");
+            error_log("Servicio ID: " . $servicio_id);
+            error_log("Datos recibidos: " . print_r($datos, true));
+            
+            // Calcular kilometraje recorrido en PHP
+            $km_recorrido = isset($datos['kilometraje_fin']) && isset($datos['kilometraje_inicio']) 
+                ? ($datos['kilometraje_fin'] - $datos['kilometraje_inicio']) 
+                : null;
+            
             $query = "UPDATE {$this->table} 
                       SET fecha_fin = CURRENT_TIMESTAMP,
                           kilometraje_fin = :kilometraje_fin,
-                          kilometraje_recorrido = :kilometraje_fin - kilometraje_inicio,
                           duracion_minutos = TIMESTAMPDIFF(MINUTE, fecha_inicio, CURRENT_TIMESTAMP),
                           estado = 'finalizado',
-                          costo = :costo,
-                          notas = CONCAT(COALESCE(notas, ''), :notas_fin)
+                          costo = :costo
                       WHERE id = :servicio_id";
             
+            error_log("Query SQL: " . $query);
+            
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':servicio_id', $servicio_id);
+            $stmt->bindParam(':servicio_id', $servicio_id, PDO::PARAM_INT);
             $stmt->bindParam(':kilometraje_fin', $datos['kilometraje_fin']);
             $stmt->bindParam(':costo', $datos['costo']);
             
-            $notas_adicionales = !empty($datos['notas']) ? "\n--- Finalización ---\n" . $datos['notas'] : '';
-            $stmt->bindParam(':notas_fin', $notas_adicionales);
+            error_log("Parámetros vinculados - servicio_id: $servicio_id, km_fin: {$datos['kilometraje_fin']}, costo: {$datos['costo']}");
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            error_log("Resultado execute(): " . ($resultado ? 'TRUE' : 'FALSE'));
+            error_log("Filas afectadas: " . $stmt->rowCount());
+            
+            if (!$resultado) {
+                error_log("ERROR SQL: " . print_r($stmt->errorInfo(), true));
+                return false;
+            }
+            
+            // Actualizar notas si hay
+            if (!empty($datos['notas'])) {
+                $query_notas = "UPDATE {$this->table} 
+                               SET notas = CONCAT(COALESCE(notas, ''), '\n--- Finalización ---\n', :notas_fin)
+                               WHERE id = :servicio_id";
+                $stmt_notas = $this->db->prepare($query_notas);
+                $stmt_notas->bindParam(':servicio_id', $servicio_id, PDO::PARAM_INT);
+                $stmt_notas->bindParam(':notas_fin', $datos['notas']);
+                $stmt_notas->execute();
+            }
+            
+            error_log("=== FINALIZACIÓN EXITOSA ===");
+            return true;
+            
         } catch (PDOException $e) {
-            error_log("Error al finalizar servicio: " . $e->getMessage());
+            error_log("EXCEPCIÓN al finalizar servicio: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         }
     }
