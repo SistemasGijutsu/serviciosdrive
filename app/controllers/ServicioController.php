@@ -23,7 +23,7 @@ class ServicioController {
     }
     
     /**
-     * Mostrar formulario para registrar servicio
+     * Mostrar formulario para registrar servicio - SIMPLIFICADO
      */
     public function mostrarFormulario() {
         // Verificar que tenga sesión de trabajo activa
@@ -32,8 +32,8 @@ class ServicioController {
             exit;
         }
         
-        // Verificar si ya tiene un servicio activo
-        $servicioActivo = $this->servicioModel->obtenerServicioActivo($_SESSION['usuario_id']);
+        // Ya no verificamos servicios activos, solo registramos información
+        $servicioActivo = false;
         
         // Obtener info de la sesión de trabajo
         $sesionActiva = $this->sesionTrabajoModel->obtenerSesionActiva($_SESSION['usuario_id']);
@@ -42,7 +42,7 @@ class ServicioController {
     }
     
     /**
-     * Crear nuevo servicio
+     * Crear nuevo servicio - SIMPLIFICADO: solo guardar información
      */
     public function crear() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -56,88 +56,44 @@ class ServicioController {
             return;
         }
         
-        // Verificar que no tenga un servicio activo
-        $servicioActivo = $this->servicioModel->obtenerServicioActivo($_SESSION['usuario_id']);
-        if ($servicioActivo) {
-            $this->responderJSON(['success' => false, 'message' => 'Ya tienes un servicio activo. Finalízalo primero.']);
-            return;
-        }
-        
         $datos = [
             'sesion_trabajo_id' => $_SESSION['sesion_trabajo_id'],
             'usuario_id' => $_SESSION['usuario_id'],
             'vehiculo_id' => $_SESSION['vehiculo_id'],
             'origen' => $_POST['origen'] ?? '',
             'destino' => $_POST['destino'] ?? '',
-            'kilometraje_inicio' => $_POST['kilometraje_inicio'] ?? null,
+            'fecha_servicio' => $_POST['fecha_servicio'] ?? date('Y-m-d H:i:s'),
+            'kilometros_recorridos' => $_POST['kilometros_recorridos'] ?? 0,
             'tipo_servicio' => $_POST['tipo_servicio'] ?? '',
             'notas' => $_POST['notas'] ?? ''
         ];
         
         // Validar campos requeridos
-        if (empty($datos['origen']) || empty($datos['destino'])) {
-            $this->responderJSON(['success' => false, 'message' => 'Origen y destino son obligatorios']);
+        if (empty($datos['origen']) || empty($datos['destino']) || empty($datos['kilometros_recorridos'])) {
+            $this->responderJSON(['success' => false, 'message' => 'Origen, destino y kilómetros son obligatorios']);
             return;
         }
         
         $servicio_id = $this->servicioModel->crear($datos);
         
         if ($servicio_id) {
-            $_SESSION['servicio_activo_id'] = $servicio_id;
             $this->responderJSON([
                 'success' => true,
-                'message' => 'Servicio iniciado correctamente',
+                'message' => 'Servicio registrado correctamente',
                 'servicio_id' => $servicio_id,
                 'redirect' => APP_URL . '/public/dashboard.php'
             ]);
         } else {
-            $this->responderJSON(['success' => false, 'message' => 'Error al crear servicio']);
+            $this->responderJSON(['success' => false, 'message' => 'Error al registrar servicio']);
         }
     }
     
     /**
-     * Finalizar servicio activo
+     * Finalizar servicio - YA NO SE USA
      */
     public function finalizar() {
-        error_log("=== CONTROLADOR FINALIZAR ===");
-        error_log("Método REQUEST: " . $_SERVER['REQUEST_METHOD']);
-        error_log("POST data: " . print_r($_POST, true));
-        error_log("Usuario ID session: " . ($_SESSION['usuario_id'] ?? 'NO DEFINIDO'));
-        
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
-            return;
-        }
-        
-        $servicioActivo = $this->servicioModel->obtenerServicioActivo($_SESSION['usuario_id']);
-        
-        error_log("Servicio activo encontrado: " . print_r($servicioActivo, true));
-        
-        if (!$servicioActivo) {
-            $this->responderJSON(['success' => false, 'message' => 'No hay servicio activo']);
-            return;
-        }
-        
-        $datos = [
-            'kilometraje_fin' => $_POST['kilometraje_fin'] ?? null,
-            'costo' => $_POST['costo'] ?? 0,
-            'notas' => $_POST['notas'] ?? ''
-        ];
-        
-        error_log("Datos preparados para finalizar: " . print_r($datos, true));
-        
-        if ($this->servicioModel->finalizar($servicioActivo['id'], $datos)) {
-            unset($_SESSION['servicio_activo_id']);
-            error_log("Servicio finalizado correctamente, respondiendo success=true");
-            $this->responderJSON([
-                'success' => true,
-                'message' => 'Servicio finalizado correctamente',
-                'redirect' => APP_URL . '/public/dashboard.php'
-            ]);
-        } else {
-            error_log("Modelo retornó FALSE, respondiendo error");
-            $this->responderJSON(['success' => false, 'message' => 'Error al finalizar servicio']);
-        }
+        // Esta función ya no se usa porque solo guardamos información directa
+        $this->responderJSON(['success' => false, 'message' => 'Esta función ya no está disponible']);
     }
     
     /**

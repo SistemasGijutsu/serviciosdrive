@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS sesiones_trabajo (
     INDEX idx_fecha_inicio (fecha_inicio)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de servicios/rodamientos (trayectos)
+-- Tabla de servicios/rodamientos (trayectos) - SOLO INFORMACIÓN
 CREATE TABLE IF NOT EXISTS servicios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sesion_trabajo_id INT NOT NULL,
@@ -80,24 +80,17 @@ CREATE TABLE IF NOT EXISTS servicios (
     vehiculo_id INT NOT NULL,
     origen VARCHAR(255) NOT NULL,
     destino VARCHAR(255) NOT NULL,
-    kilometraje_inicio INT,
-    kilometraje_fin INT,
-    kilometraje_recorrido INT,
-    fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_fin TIMESTAMP NULL,
-    duracion_minutos INT,
-    estado ENUM('en_curso', 'finalizado', 'cancelado') DEFAULT 'en_curso',
-    tipo_servicio VARCHAR(100), -- carga, pasajero, traslado, etc.
+    fecha_servicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    kilometros_recorridos DECIMAL(10,2) NOT NULL COMMENT 'Kilometraje real recorrido sin redondeos',
+    tipo_servicio VARCHAR(100), -- Taxi, Uber, Cabify, etc.
     notas TEXT,
-    costo DECIMAL(10,2),
     FOREIGN KEY (sesion_trabajo_id) REFERENCES sesiones_trabajo(id) ON DELETE CASCADE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE,
     INDEX idx_sesion (sesion_trabajo_id),
     INDEX idx_usuario (usuario_id),
     INDEX idx_vehiculo (vehiculo_id),
-    INDEX idx_estado (estado),
-    INDEX idx_fecha_inicio (fecha_inicio)
+    INDEX idx_fecha_servicio (fecha_servicio)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar datos de prueba

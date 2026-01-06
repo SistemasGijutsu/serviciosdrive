@@ -86,21 +86,18 @@
                 <?php if (isset($historial) && count($historial) > 0): ?>
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                         <?php foreach ($historial as $servicio): ?>
-                            <div style="border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; transition: all 0.3s; <?php echo $servicio['estado'] == 'en_curso' ? 'border-left: 5px solid #f59e0b; background: #fffbeb;' : 'border-left: 5px solid #10b981;'; ?>">
+                            <div style="border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; transition: all 0.3s; border-left: 5px solid #10b981;">
                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
                                     <div>
                                         <div style="font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 5px;">
                                             <?php echo htmlspecialchars($servicio['tipo_servicio'] ?? 'Servicio'); ?>
                                         </div>
                                         <div style="font-size: 13px; color: #64748b;">
-                                            <?php echo date('d/m/Y H:i', strtotime($servicio['fecha_inicio'])); ?>
-                                            <?php if ($servicio['estado'] == 'finalizado' && isset($servicio['fecha_fin'])): ?>
-                                                - <?php echo date('d/m/Y H:i', strtotime($servicio['fecha_fin'])); ?>
-                                            <?php endif; ?>
+                                            📅 <?php echo date('d/m/Y H:i', strtotime($servicio['fecha_servicio'])); ?>
                                         </div>
                                     </div>
-                                    <span style="padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; <?php echo $servicio['estado'] == 'en_curso' ? 'background: #fef3c7; color: #92400e;' : 'background: #d1fae5; color: #065f46;'; ?>">
-                                        <?php echo $servicio['estado'] == 'en_curso' ? '🔄 En Curso' : '✓ Finalizado'; ?>
+                                    <span style="padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #d1fae5; color: #065f46;">
+                                        ✓ Registrado
                                     </span>
                                 </div>
                                 
@@ -114,24 +111,15 @@
                                         <div style="font-weight: 500; color: #1e293b;"><?php echo htmlspecialchars($servicio['destino'] ?? 'N/A'); ?></div>
                                     </div>
                                     <div>
-                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">🛣️ Kilometraje</div>
-                                        <div style="font-weight: 500; color: #1e293b;">
-                                            <?php 
-                                            if (isset($servicio['kilometraje_inicio']) && isset($servicio['kilometraje_fin'])) {
-                                                $km = $servicio['kilometraje_fin'] - $servicio['kilometraje_inicio'];
-                                                echo number_format($km, 1) . ' km';
-                                            } else {
-                                                echo $servicio['kilometraje_inicio'] ?? 'N/A';
-                                            }
-                                            ?>
+                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">🛣️ Kilómetros Recorridos</div>
+                                        <div style="font-weight: 600; color: #10b981; font-size: 16px;">
+                                            <?php echo number_format($servicio['kilometros_recorridos'], 2); ?> km
                                         </div>
                                     </div>
-                                    <?php if (isset($servicio['costo']) && $servicio['costo'] > 0): ?>
                                     <div>
-                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">💰 Costo</div>
-                                        <div style="font-weight: 600; color: #10b981;">$<?php echo number_format($servicio['costo'], 2); ?></div>
+                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">🚗 Vehículo</div>
+                                        <div style="font-weight: 500; color: #1e293b;"><?php echo htmlspecialchars($servicio['vehiculo_info'] ?? 'N/A'); ?></div>
                                     </div>
-                                    <?php endif; ?>
                                 </div>
                                 
                                 <?php if (!empty($servicio['notas'])): ?>
