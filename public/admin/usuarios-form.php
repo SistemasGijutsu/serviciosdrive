@@ -140,9 +140,9 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
         <div class="dashboard-header">
-            <div>
-                <h1><?= $esEdicion ? '✏️ Editar' : '➕ Nuevo' ?> Usuario</h1>
-                <p class="text-muted"><?= $esEdicion ? 'Modifica los datos del usuario' : 'Registra un nuevo usuario en el sistema' ?></p>
+            <div class="page-header">
+                <h1><?= $esEdicion ? 'Editar Usuario' : 'Nuevo Usuario' ?></h1>
+                <p class="text-muted"><?= $esEdicion ? 'Actualiza la información del usuario en el sistema' : 'Registra un nuevo usuario en el sistema' ?></p>
             </div>
             <button class="btn btn-secondary" onclick="location.href='<?= APP_URL ?>/public/admin/usuarios.php'">
                 ← Volver
@@ -161,49 +161,55 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
             </div>
         <?php endif; ?>
         
-        <div class="card">
+        <div class="card form-container">
             <form method="POST" class="form-grid">
                 <div class="form-group">
-                    <label for="usuario">Usuario *</label>
+                    <label for="usuario">Nombre de Usuario</label>
                     <input type="text" id="usuario" name="usuario" 
+                           placeholder="Ingresa el nombre de usuario"
                            value="<?= $usuario ? htmlspecialchars($usuario['usuario']) : '' ?>" 
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Contraseña <?= !$esEdicion ? '*' : '(dejar en blanco para no cambiar)' ?></label>
+                    <label for="password">Contraseña<?= !$esEdicion ? '' : ' (Opcional)' ?></label>
                     <input type="password" id="password" name="password" 
+                           placeholder="<?= !$esEdicion ? 'Ingresa una contraseña segura' : 'Dejar vacío para mantener la actual' ?>"
                            <?= !$esEdicion ? 'required' : '' ?>>
                 </div>
                 
                 <div class="form-group">
-                    <label for="nombre">Nombre *</label>
+                    <label for="nombre">Nombre</label>
                     <input type="text" id="nombre" name="nombre" 
+                           placeholder="Nombre del usuario"
                            value="<?= $usuario ? htmlspecialchars($usuario['nombre']) : '' ?>" 
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="apellido">Apellido *</label>
+                    <label for="apellido">Apellido</label>
                     <input type="text" id="apellido" name="apellido" 
+                           placeholder="Apellido del usuario"
                            value="<?= $usuario ? htmlspecialchars($usuario['apellido']) : '' ?>" 
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email">Correo Electrónico</label>
                     <input type="email" id="email" name="email" 
+                           placeholder="usuario@ejemplo.com"
                            value="<?= $usuario ? htmlspecialchars($usuario['email']) : '' ?>">
                 </div>
                 
                 <div class="form-group">
                     <label for="telefono">Teléfono</label>
                     <input type="text" id="telefono" name="telefono" 
+                           placeholder="(000) 000-0000"
                            value="<?= $usuario ? htmlspecialchars($usuario['telefono']) : '' ?>">
                 </div>
                 
                 <div class="form-group">
-                    <label for="rol_id">Rol *</label>
+                    <label for="rol_id">Rol de Usuario</label>
                     <select id="rol_id" name="rol_id" required>
                         <option value="1" <?= ($usuario && $usuario['rol_id'] == 1) || !$usuario ? 'selected' : '' ?>>Usuario</option>
                         <option value="2" <?= $usuario && $usuario['rol_id'] == 2 ? 'selected' : '' ?>>Administrador</option>
@@ -214,13 +220,13 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
                     <label class="checkbox-label">
                         <input type="checkbox" name="activo" 
                                <?= !$usuario || $usuario['activo'] ? 'checked' : '' ?>>
-                        Usuario Activo
+                        <span>Usuario Activo</span>
                     </label>
                 </div>
                 
                 <div class="form-actions" style="grid-column: 1 / -1;">
                     <button type="submit" class="btn btn-primary">
-                        <?= $esEdicion ? '💾 Guardar Cambios' : '➕ Crear Usuario' ?>
+                        <?= $esEdicion ? 'Guardar Cambios' : 'Crear Usuario' ?>
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="location.href='<?= APP_URL ?>/public/admin/usuarios.php'">
                         Cancelar

@@ -131,9 +131,9 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
         <div class="dashboard-header">
-            <div>
-                <h1><?= $esEdicion ? '✏️ Editar' : '➕ Nuevo' ?> Vehículo</h1>
-                <p class="text-muted"><?= $esEdicion ? 'Modifica los datos del vehículo' : 'Registra un nuevo vehículo en el sistema' ?></p>
+            <div class="page-header">
+                <h1><?= $esEdicion ? 'Editar Vehículo' : 'Nuevo Vehículo' ?></h1>
+                <p class="text-muted"><?= $esEdicion ? 'Actualiza la información del vehículo en el sistema' : 'Registra un nuevo vehículo en el sistema' ?></p>
             </div>
             <button class="btn btn-secondary" onclick="location.href='<?= APP_URL ?>/public/admin/vehiculos.php'">
                 ← Volver
@@ -152,49 +152,54 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
             </div>
         <?php endif; ?>
         
-        <div class="card">
+        <div class="card form-container">
             <form method="POST" class="form-grid">
                 <div class="form-group">
-                    <label for="placa">Placa *</label>
+                    <label for="placa">Placa</label>
                     <input type="text" id="placa" name="placa" 
+                           placeholder="ABC-1234"
                            value="<?= $vehiculo ? htmlspecialchars($vehiculo['placa']) : '' ?>" 
                            style="text-transform: uppercase;"
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="marca">Marca *</label>
+                    <label for="marca">Marca</label>
                     <input type="text" id="marca" name="marca" 
+                           placeholder="Toyota, Honda, Ford..."
                            value="<?= $vehiculo ? htmlspecialchars($vehiculo['marca']) : '' ?>" 
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="modelo">Modelo *</label>
+                    <label for="modelo">Modelo</label>
                     <input type="text" id="modelo" name="modelo" 
+                           placeholder="Corolla, Civic, F-150..."
                            value="<?= $vehiculo ? htmlspecialchars($vehiculo['modelo']) : '' ?>" 
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="anio">Año *</label>
+                    <label for="anio">Año</label>
                     <input type="number" id="anio" name="anio" 
+                           placeholder="<?= date('Y') ?>"
                            value="<?= $vehiculo ? htmlspecialchars($vehiculo['anio']) : date('Y') ?>" 
                            min="1900" max="<?= date('Y') + 1 ?>"
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="color">Color *</label>
+                    <label for="color">Color</label>
                     <input type="text" id="color" name="color" 
+                           placeholder="Blanco, Negro, Azul..."
                            value="<?= $vehiculo ? htmlspecialchars($vehiculo['color']) : '' ?>" 
                            required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="tipo">Tipo *</label>
+                    <label for="tipo">Tipo de Vehículo</label>
                     <select id="tipo" name="tipo" required>
-                        <option value="">Seleccionar...</option>
+                        <option value="">Seleccionar tipo...</option>
                         <option value="Sedán" <?= $vehiculo && $vehiculo['tipo'] == 'Sedán' ? 'selected' : '' ?>>Sedán</option>
                         <option value="SUV" <?= $vehiculo && $vehiculo['tipo'] == 'SUV' ? 'selected' : '' ?>>SUV</option>
                         <option value="Camioneta" <?= $vehiculo && $vehiculo['tipo'] == 'Camioneta' ? 'selected' : '' ?>>Camioneta</option>
@@ -207,8 +212,9 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
                 </div>
                 
                 <div class="form-group">
-                    <label for="kilometraje">Kilometraje *</label>
+                    <label for="kilometraje">Kilometraje</label>
                     <input type="number" id="kilometraje" name="kilometraje" 
+                           placeholder="0"
                            value="<?= $vehiculo ? htmlspecialchars($vehiculo['kilometraje']) : '0' ?>" 
                            min="0"
                            required>
@@ -218,13 +224,13 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
                     <label class="checkbox-label">
                         <input type="checkbox" name="activo" 
                                <?= !$vehiculo || $vehiculo['activo'] ? 'checked' : '' ?>>
-                        Vehículo Activo
+                        <span>Vehículo Activo</span>
                     </label>
                 </div>
                 
                 <div class="form-actions" style="grid-column: 1 / -1;">
                     <button type="submit" class="btn btn-primary">
-                        <?= $esEdicion ? '💾 Guardar Cambios' : '➕ Crear Vehículo' ?>
+                        <?= $esEdicion ? 'Guardar Cambios' : 'Crear Vehículo' ?>
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="location.href='<?= APP_URL ?>/public/admin/vehiculos.php'">
                         Cancelar
