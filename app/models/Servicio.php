@@ -152,4 +152,31 @@ class Servicio {
             return false;
         }
     }
+    
+    /**
+     * Obtener TODOS los servicios (para administrador)
+     */
+    public function obtenerTodosServicios($limite = 100) {
+        try {
+            $query = "SELECT s.*, 
+                             v.placa, v.marca, v.modelo,
+                             CONCAT(v.marca, ' ', v.modelo, ' (', v.placa, ')') as vehiculo_info,
+                             u.nombre, u.apellido,
+                             CONCAT(u.nombre, ' ', u.apellido) as conductor
+                      FROM {$this->table} s
+                      INNER JOIN vehiculos v ON s.vehiculo_id = v.id
+                      INNER JOIN usuarios u ON s.usuario_id = u.id
+                      ORDER BY s.fecha_servicio DESC
+                      LIMIT :limite";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener todos los servicios: " . $e->getMessage());
+            return [];
+        }
+    }
 }
