@@ -81,9 +81,17 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                     <span class="nav-icon">📝</span>
                     <span class="nav-text">Registrar Servicio</span>
                 </a>
+                <a href="<?= APP_URL ?>/public/registrar-gasto.php" class="nav-link">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-text">Registrar Gasto</span>
+                </a>
                 <a href="<?= APP_URL ?>/public/historial.php" class="nav-link">
                     <span class="nav-icon">📋</span>
-                    <span class="nav-text">Historial</span>
+                    <span class="nav-text">Historial Servicios</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/historial-gastos.php" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Historial Gastos</span>
                 </a>
             <?php endif; ?>
             <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">

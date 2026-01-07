@@ -56,9 +56,17 @@
                     <span class="nav-icon">➕</span>
                     <span class="nav-text">Nuevo Servicio</span>
                 </a>
+                <a href="<?php echo APP_URL; ?>/public/registrar-gasto.php" class="nav-link">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-text">Registrar Gasto</span>
+                </a>
                 <a href="<?php echo APP_URL; ?>/public/historial.php" class="nav-link">
                     <span class="nav-icon">📜</span>
-                    <span class="nav-text">Historial</span>
+                    <span class="nav-text">Historial Servicios</span>
+                </a>
+                <a href="<?php echo APP_URL; ?>/public/historial-gastos.php" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Historial Gastos</span>
                 </a>
             <?php endif; ?>
             
