@@ -123,3 +123,48 @@ window.addEventListener('offline', () => {
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
+
+// ===================================
+// FUNCIONES DASHBOARD
+// ===================================
+
+// Toggle sidebar
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (sidebarToggle && sidebar && mainContent) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('sidebar-collapsed');
+            mainContent.classList.toggle('content-expanded');
+        });
+    }
+});
+
+// Modal finalizar servicio
+function mostrarModalFinalizar() {
+    const modal = document.getElementById('modalFinalizar');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function cerrarModalFinalizar() {
+    const modal = document.getElementById('modalFinalizar');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Cerrar modal al hacer clic fuera
+window.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalFinalizar');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                cerrarModalFinalizar();
+            }
+        });
+    }
+});
