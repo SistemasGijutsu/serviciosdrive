@@ -1,8 +1,6 @@
-// ===================================
-// APP.JS - Funcionalidades generales y PWA
-// ===================================
+// Funcionalidades generales y PWA
 
-// Registrar Service Worker para PWA
+// Registrar Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/serviciosdrive/service-worker.js')

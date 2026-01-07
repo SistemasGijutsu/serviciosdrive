@@ -84,10 +84,7 @@
             <p>Ingresa los datos del servicio que vas a realizar</p>
         </div>
 
-        <?php if (isset($servicioActivo) && $servicioActivo): ?>
-            <!-- Ya no hay servicios "activos", solo se registra información -->
-        <?php else: ?>
-            <?php if (isset($sesionActiva)): ?>
+        <?php if (isset($sesionActiva)): ?>
                 <div class="info-card" style="display: flex; gap: 30px; align-items: center; margin-bottom: 25px; padding: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 32px;">🚗</span>

@@ -1,5 +1,4 @@
 <?php
-// No iniciar sesión aquí, se maneja en los archivos públicos
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../models/Servicio.php';
 require_once __DIR__ . '/../models/SesionTrabajo.php';
@@ -86,14 +85,6 @@ class ServicioController {
         } else {
             $this->responderJSON(['success' => false, 'message' => 'Error al registrar servicio']);
         }
-    }
-    
-    /**
-     * Finalizar servicio - YA NO SE USA
-     */
-    public function finalizar() {
-        // Esta función ya no se usa porque solo guardamos información directa
-        $this->responderJSON(['success' => false, 'message' => 'Esta función ya no está disponible']);
     }
     
     /**

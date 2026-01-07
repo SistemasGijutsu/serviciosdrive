@@ -1,5 +1,4 @@
 <?php
-// No iniciar sesión aquí, se maneja en los archivos públicos
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Vehiculo.php';

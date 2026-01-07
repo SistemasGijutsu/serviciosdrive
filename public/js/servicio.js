@@ -1,6 +1,4 @@
-// ===================================
-// SERVICIO.JS - Gestión de servicios
-// ===================================
+// Gestión de servicios
 
 document.addEventListener('DOMContentLoaded', function() {
     // Formulario para nuevo servicio
@@ -42,34 +40,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Formulario para finalizar servicio
     const formFinalizar = document.getElementById('formFinalizarServicio');
     if (formFinalizar) {
-        console.log('Formulario de finalización encontrado');
         
         formFinalizar.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('Submit interceptado, procesando...');
             
             const formData = new FormData(this);
             const btnSubmit = this.querySelector('button[type="submit"]');
             
-            console.log('Form data:', Object.fromEntries(formData));
-            console.log('Action URL:', this.action);
-            
             setButtonLoading(btnSubmit, true);
             
             try {
-                console.log('Enviando petición POST...');
                 const response = await fetch(this.action, {
                     method: 'POST',
                     body: new URLSearchParams(formData)
                 });
                 
-                console.log('Respuesta recibida:', response.status);
                 const data = await response.json();
-                console.log('JSON parseado:', data);
                 
                 if (data.success) {
                     mostrarMensaje(data.message, 'success');
-                    console.log('Redirigiendo a:', data.redirect);
                     setTimeout(() => {
                         window.location.href = data.redirect;
                     }, 800);
@@ -83,8 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 setButtonLoading(btnSubmit, false);
             }
         });
-    } else {
-        console.log('Formulario de finalización NO encontrado');
     }
     
     // Autocompletar campos comunes (localStorage)

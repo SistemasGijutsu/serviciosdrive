@@ -1,9 +1,7 @@
 <?php
-// Iniciar sesión y buffer para evitar salidas accidentales que rompan JSON
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-// Capturar cualquier salida (warnings, notices) para limpiarla antes de responder JSON
 ob_start();
 
 require_once __DIR__ . '/../models/Gasto.php';
@@ -25,12 +23,11 @@ class GastoController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        // Limpiar cualquier salida previa capturada por el buffer
         if (ob_get_length() !== false) {
             ob_clean();
         }
         
-        // Verificar que el usuario esté autenticado
+        // Verificar autenticación
         if (!isset($_SESSION['usuario_id'])) {
             http_response_code(401);
             echo json_encode(['success' => false, 'mensaje' => 'No autorizado']);
@@ -90,16 +87,6 @@ class GastoController {
                 $datos = !empty($parsed) ? $parsed : $_POST;
             }
 
-            // Registro de depuración: guardar request en log temporal
-            $log = [];
-            $log['time'] = date('c');
-            $log['remote_addr'] = $_SERVER['REMOTE_ADDR'] ?? 'cli';
-            $log['content_type'] = $contentType;
-            $log['raw'] = $raw;
-            $log['post'] = $_POST;
-            $log['parsed'] = $datos;
-            @file_put_contents(sys_get_temp_dir() . '/serviciosdrive_gastos.log', json_encode($log) . PHP_EOL, FILE_APPEND);
-            
             // Verificar datos recibidos
             if (empty($datos) || !is_array($datos)) {
                 http_response_code(400);

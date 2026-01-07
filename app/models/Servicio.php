@@ -10,7 +10,7 @@ class Servicio {
     }
     
     /**
-     * Crear nuevo servicio - SOLO INFORMACIÓN
+     * Crear nuevo servicio
      */
     public function crear($datos) {
         try {
@@ -40,22 +40,6 @@ class Servicio {
             error_log("Error al crear servicio: " . $e->getMessage());
             return false;
         }
-    }
-    
-    /**
-     * Finalizar servicio - YA NO SE USA, SOLO CREAR
-     */
-    public function finalizar($servicio_id, $datos) {
-        // Esta función ya no se usa porque solo guardamos información directa
-        return true;
-    }
-    
-    /**
-     * Obtener servicio activo del usuario - YA NO SE USA
-     */
-    public function obtenerServicioActivo($usuario_id) {
-        // Ya no hay servicios "activos", solo registros de información
-        return false;
     }
     
     /**
@@ -109,7 +93,7 @@ class Servicio {
     }
     
     /**
-     * Obtener estadísticas del conductor - SIMPLIFICADO
+     * Obtener estadísticas del conductor
      */
     public function obtenerEstadisticasConductor($usuario_id) {
         try {

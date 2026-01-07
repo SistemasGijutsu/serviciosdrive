@@ -244,9 +244,7 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
         
         // Registrar Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('<?= APP_URL ?>/service-worker.js')
-                .then(reg => console.log('Service Worker registrado'))
-                .catch(err => console.error('Error al registrar Service Worker:', err));
+            navigator.serviceWorker.register('<?= APP_URL ?>/service-worker.js');
         }
     </script>
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
