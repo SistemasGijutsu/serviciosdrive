@@ -98,6 +98,48 @@ class ServicioController {
     }
     
     /**
+     * Finalizar sesión de trabajo
+     */
+    public function finalizar() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
+            return;
+        }
+        
+        // Verificar sesión de trabajo activa
+        if (!isset($_SESSION['sesion_trabajo_id'])) {
+            $this->responderJSON(['success' => false, 'message' => 'No hay sesión de trabajo activa']);
+            return;
+        }
+        
+        $sesion_id = $_SESSION['sesion_trabajo_id'];
+        $kilometraje_fin = $_POST['kilometraje_fin'] ?? null;
+        $notas = $_POST['notas'] ?? null;
+        
+        // Validar kilometraje final
+        if (empty($kilometraje_fin)) {
+            $this->responderJSON(['success' => false, 'message' => 'El kilometraje final es obligatorio']);
+            return;
+        }
+        
+        // Finalizar sesión
+        if ($this->sesionTrabajoModel->finalizarSesion($sesion_id, $kilometraje_fin, $notas)) {
+            // Limpiar variables de sesión
+            unset($_SESSION['sesion_trabajo_id']);
+            unset($_SESSION['vehiculo_id']);
+            unset($_SESSION['vehiculo_info']);
+            
+            $this->responderJSON([
+                'success' => true,
+                'message' => 'Sesión finalizada correctamente',
+                'redirect' => APP_URL . '/public/dashboard.php'
+            ]);
+        } else {
+            $this->responderJSON(['success' => false, 'message' => 'Error al finalizar la sesión']);
+        }
+    }
+    
+    /**
      * Responder con JSON
      */
     private function responderJSON($data) {

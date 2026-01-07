@@ -191,14 +191,7 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                 
                 <div class="form-group">
                     <label class="form-label">
-                        💰 Costo del Servicio
-                    </label>
-                    <input type="number" name="costo" step="0.01" placeholder="0.00" class="form-input">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">
-                        📝 Notas Finales
+                         Notas Finales
                     </label>
                     <textarea name="notas" rows="3" placeholder="Observaciones, comentarios..." class="form-textarea"></textarea>
                 </div>

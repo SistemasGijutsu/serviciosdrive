@@ -84,7 +84,7 @@
             <p>Ingresa los datos del servicio que vas a realizar</p>
         </div>
 
-        <?php if (isset($sesionActiva)): ?>
+        <?php if (isset($sesionActiva) && $sesionActiva): ?>
                 <div class="info-card" style="display: flex; gap: 30px; align-items: center; margin-bottom: 25px; padding: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 32px;">🚗</span>
@@ -116,7 +116,6 @@
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
 
             <div class="card" style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: none; overflow: hidden;">
                 <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border: none;">
