@@ -169,4 +169,27 @@ class Vehiculo {
             return false;
         }
     }
+    
+    /**
+     * Obtener estadísticas de vehículos (para administrador)
+     */
+    public function obtenerEstadisticas() {
+        try {
+            $query = "SELECT 
+                        COUNT(*) as total_vehiculos,
+                        COUNT(CASE WHEN activo = 1 THEN 1 END) as vehiculos_activos,
+                        COUNT(CASE WHEN tipo = 'Automóvil' THEN 1 END) as automoviles,
+                        COUNT(CASE WHEN tipo = 'Camioneta' THEN 1 END) as camionetas,
+                        COUNT(CASE WHEN tipo = 'Motocicleta' THEN 1 END) as motocicletas
+                      FROM {$this->table}";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener estadísticas de vehículos: " . $e->getMessage());
+            return false;
+        }
+    }
 }

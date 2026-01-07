@@ -163,4 +163,56 @@ class Servicio {
             return [];
         }
     }
+    
+    /**
+     * Obtener estadísticas generales del sistema (para administrador)
+     */
+    public function obtenerEstadisticasGenerales() {
+        try {
+            $query = "SELECT 
+                        COUNT(*) as total_servicios,
+                        COUNT(DISTINCT usuario_id) as conductores_activos,
+                        COUNT(DISTINCT vehiculo_id) as vehiculos_utilizados,
+                        SUM(kilometros_recorridos) as km_totales,
+                        AVG(kilometros_recorridos) as km_promedio,
+                        COUNT(CASE WHEN DATE(fecha_servicio) = CURDATE() THEN 1 END) as servicios_hoy,
+                        COUNT(CASE WHEN YEARWEEK(fecha_servicio, 1) = YEARWEEK(CURDATE(), 1) THEN 1 END) as servicios_semana,
+                        COUNT(CASE WHEN MONTH(fecha_servicio) = MONTH(CURDATE()) AND YEAR(fecha_servicio) = YEAR(CURDATE()) THEN 1 END) as servicios_mes
+                      FROM {$this->table}";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener estadísticas generales: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Obtener servicios recientes (para administrador)
+     */
+    public function obtenerServiciosRecientes($limite = 5) {
+        try {
+            $query = "SELECT s.*, 
+                             v.placa, v.marca, v.modelo,
+                             u.nombre, u.apellido,
+                             CONCAT(u.nombre, ' ', u.apellido) as conductor
+                      FROM {$this->table} s
+                      INNER JOIN vehiculos v ON s.vehiculo_id = v.id
+                      INNER JOIN usuarios u ON s.usuario_id = u.id
+                      ORDER BY s.fecha_servicio DESC
+                      LIMIT :limite";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener servicios recientes: " . $e->getMessage());
+            return [];
+        }
+    }
 }

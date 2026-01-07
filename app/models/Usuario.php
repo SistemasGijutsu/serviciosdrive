@@ -187,4 +187,25 @@ class Usuario {
         }
     }
     
+    /**
+     * Obtener estadísticas de usuarios (para administrador)
+     */
+    public function obtenerEstadisticas() {
+        try {
+            $query = "SELECT 
+                        COUNT(*) as total_usuarios,
+                        COUNT(CASE WHEN activo = 1 THEN 1 END) as usuarios_activos,
+                        COUNT(CASE WHEN rol_id = 1 THEN 1 END) as conductores,
+                        COUNT(CASE WHEN rol_id = 2 THEN 1 END) as administradores
+                      FROM {$this->table}";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener estadísticas de usuarios: " . $e->getMessage());
+            return false;
+        }
+    }
 }

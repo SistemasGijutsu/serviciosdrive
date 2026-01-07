@@ -5,6 +5,10 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/models/SesionTrabajo.php';
+require_once __DIR__ . '/../app/models/Servicio.php';
+require_once __DIR__ . '/../app/models/Gasto.php';
+require_once __DIR__ . '/../app/models/Usuario.php';
+require_once __DIR__ . '/../app/models/Vehiculo.php';
 
 $auth = new AuthController();
 $auth->verificarAutenticacion();
@@ -14,9 +18,27 @@ $vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'Sin vehículo asignado';
 $esAdmin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2;
 
 $sesionActiva = null;
+$estadisticas = null;
+$estadisticasGastos = null;
+$estadisticasUsuarios = null;
+$estadisticasVehiculos = null;
+$serviciosRecientes = [];
+
 if (!$esAdmin && isset($_SESSION['usuario_id'])) {
     $sesionModel = new SesionTrabajo();
     $sesionActiva = $sesionModel->obtenerSesionActiva($_SESSION['usuario_id']);
+} elseif ($esAdmin) {
+    // Obtener estadísticas para el administrador
+    $servicioModel = new Servicio();
+    $gastoModel = new Gasto();
+    $usuarioModel = new Usuario();
+    $vehiculoModel = new Vehiculo();
+    
+    $estadisticas = $servicioModel->obtenerEstadisticasGenerales();
+    $estadisticasGastos = $gastoModel->obtenerEstadisticasGenerales();
+    $estadisticasUsuarios = $usuarioModel->obtenerEstadisticas();
+    $estadisticasVehiculos = $vehiculoModel->obtenerEstadisticas();
+    $serviciosRecientes = $servicioModel->obtenerServiciosRecientes(5);
 }
 ?>
 <!DOCTYPE html>
@@ -164,11 +186,120 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                 </div>
             <?php endif; ?>
         <?php else: ?>
-            <div class="dashboard-empty">
-                <div class="empty-icon">⚙️</div>
-                <h3>Panel de Administración</h3>
-                <p>Gestiona usuarios, vehículos y servicios del sistema</p>
+            <!-- Dashboard Administrador con Estadísticas -->
+            <div class="stats-grid">
+                <!-- Tarjeta de Servicios -->
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?= $estadisticas['total_servicios'] ?? 0 ?></div>
+                        <div class="stat-label">Total Servicios</div>
+                        <div class="stat-details">
+                            <span>📊 Hoy: <?= $estadisticas['servicios_hoy'] ?? 0 ?></span>
+                            <span>📅 Semana: <?= $estadisticas['servicios_semana'] ?? 0 ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tarjeta de Kilometraje -->
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon">🛣️</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?= number_format($estadisticas['km_totales'] ?? 0, 0) ?></div>
+                        <div class="stat-label">Km Recorridos</div>
+                        <div class="stat-details">
+                            <span>📈 Promedio: <?= number_format($estadisticas['km_promedio'] ?? 0, 1) ?> km</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tarjeta de Gastos -->
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value">$<?= number_format($estadisticasGastos['monto_total'] ?? 0, 2) ?></div>
+                        <div class="stat-label">Total Gastos</div>
+                        <div class="stat-details">
+                            <span>📅 Mes: $<?= number_format($estadisticasGastos['gastos_mes'] ?? 0, 2) ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tarjeta de Usuarios -->
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?= $estadisticasUsuarios['usuarios_activos'] ?? 0 ?></div>
+                        <div class="stat-label">Usuarios Activos</div>
+                        <div class="stat-details">
+                            <span>👨‍✈️ Conductores: <?= $estadisticasUsuarios['conductores'] ?? 0 ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tarjeta de Vehículos -->
+                <div class="stat-card stat-card-purple">
+                    <div class="stat-icon">🚗</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?= $estadisticasVehiculos['vehiculos_activos'] ?? 0 ?></div>
+                        <div class="stat-label">Vehículos Activos</div>
+                        <div class="stat-details">
+                            <span>🚙 Total: <?= $estadisticasVehiculos['total_vehiculos'] ?? 0 ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tarjeta de Conductores Activos -->
+                <div class="stat-card stat-card-teal">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?= $estadisticas['conductores_activos'] ?? 0 ?></div>
+                        <div class="stat-label">Conductores en Servicio</div>
+                        <div class="stat-details">
+                            <span>🚗 Vehículos: <?= $estadisticas['vehiculos_utilizados'] ?? 0 ?></span>
+                        </div>
+                    </div>
+                </div>
             </div>
+            
+            <!-- Servicios Recientes -->
+            <?php if (!empty($serviciosRecientes)): ?>
+            <div class="recent-services-section">
+                <div class="section-header">
+                    <h2>📋 Servicios Recientes</h2>
+                    <a href="<?= APP_URL ?>/public/admin/servicios.php" class="btn-view-all">Ver Todos →</a>
+                </div>
+                
+                <div class="services-table-container">
+                    <table class="services-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Conductor</th>
+                                <th>Vehículo</th>
+                                <th>Origen</th>
+                                <th>Destino</th>
+                                <th>Km</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($serviciosRecientes as $servicio): ?>
+                            <tr>
+                                <td><?= date('d/m/Y H:i', strtotime($servicio['fecha_servicio'])) ?></td>
+                                <td><?= htmlspecialchars($servicio['conductor']) ?></td>
+                                <td><?= htmlspecialchars($servicio['marca'] . ' ' . $servicio['modelo']) ?></td>
+                                <td><?= htmlspecialchars($servicio['origen']) ?></td>
+                                <td><?= htmlspecialchars($servicio['destino']) ?></td>
+                                <td><?= number_format($servicio['kilometros_recorridos'], 1) ?></td>
+                                <td><span class="badge badge-<?= strtolower($servicio['tipo_servicio']) ?>"><?= htmlspecialchars($servicio['tipo_servicio']) ?></span></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php endif; ?>
         <?php endif; ?>
     </main>
     

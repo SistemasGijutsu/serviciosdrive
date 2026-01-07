@@ -361,4 +361,51 @@ class Gasto {
             return [];
         }
     }
+    
+    /**
+     * Obtener estadísticas generales de gastos (para administrador)
+     */
+    public function obtenerEstadisticasGenerales() {
+        try {
+            $query = "SELECT 
+                        COUNT(*) as total_gastos,
+                        SUM(monto) as monto_total,
+                        AVG(monto) as monto_promedio,
+                        SUM(CASE WHEN DATE(fecha_gasto) = CURDATE() THEN monto ELSE 0 END) as gastos_hoy,
+                        SUM(CASE WHEN YEARWEEK(fecha_gasto, 1) = YEARWEEK(CURDATE(), 1) THEN monto ELSE 0 END) as gastos_semana,
+                        SUM(CASE WHEN MONTH(fecha_gasto) = MONTH(CURDATE()) AND YEAR(fecha_gasto) = YEAR(CURDATE()) THEN monto ELSE 0 END) as gastos_mes
+                      FROM {$this->table}";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener estadísticas generales de gastos: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Obtener gastos por tipo (para gráficos)
+     */
+    public function obtenerGastosPorTipo() {
+        try {
+            $query = "SELECT 
+                        tipo_gasto,
+                        COUNT(*) as cantidad,
+                        SUM(monto) as total_monto
+                      FROM {$this->table}
+                      GROUP BY tipo_gasto
+                      ORDER BY total_monto DESC";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener gastos por tipo: " . $e->getMessage());
+            return [];
+        }
+    }
 }
