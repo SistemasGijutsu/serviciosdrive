@@ -106,19 +106,19 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         
         <!-- Pestañas de Reportes -->
         <div class="reports-tabs">
-            <button class="tab-btn active" onclick="cambiarTab('resumen')">
+            <button class="tab-btn active" onclick="cambiarTab('resumen', event)">
                 <span class="tab-icon">📊</span> Resumen General
             </button>
-            <button class="tab-btn" onclick="cambiarTab('conductor')">
+            <button class="tab-btn" onclick="cambiarTab('conductor', event)">
                 <span class="tab-icon">👨‍✈️</span> Por Conductor
             </button>
-            <button class="tab-btn" onclick="cambiarTab('vehiculo')">
+            <button class="tab-btn" onclick="cambiarTab('vehiculo', event)">
                 <span class="tab-icon">🚗</span> Por Vehículo
             </button>
-            <button class="tab-btn" onclick="cambiarTab('fechas')">
+            <button class="tab-btn" onclick="cambiarTab('fechas', event)">
                 <span class="tab-icon">📅</span> Por Fechas
             </button>
-            <button class="tab-btn" onclick="cambiarTab('trayectos')">
+            <button class="tab-btn" onclick="cambiarTab('trayectos', event)">
                 <span class="tab-icon">🗺️</span> Trayectos
             </button>
         </div>
@@ -328,6 +328,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 </div>
             </div>
         </div>
+        </div>
         <!-- Fin Tab: Resumen General -->
         
         <!-- Tab: Reporte por Conductor -->
@@ -484,7 +485,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         const APP_URL = '<?= APP_URL ?>';
         
         // Cambiar entre pestañas
-        function cambiarTab(tabName) {
+        function cambiarTab(tabName, event) {
             // Ocultar todas las pestañas
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -495,7 +496,20 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             
             // Mostrar pestaña seleccionada
             document.getElementById(`tab-${tabName}`).classList.add('active');
-            event.target.closest('.tab-btn').classList.add('active');
+            
+            // Activar el botón correspondiente
+            if (event && event.target) {
+                event.target.closest('.tab-btn').classList.add('active');
+            } else {
+                // Si no hay evento, buscar el botón por el nombre de la pestaña
+                const buttons = document.querySelectorAll('.tab-btn');
+                buttons.forEach((btn, index) => {
+                    const tabs = ['resumen', 'conductor', 'vehiculo', 'fechas', 'trayectos'];
+                    if (tabs[index] === tabName) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
         }
         
         // Reporte por Conductor
@@ -503,6 +517,9 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             e.preventDefault();
             const formData = new FormData(this);
             const params = new URLSearchParams(formData);
+            const container = document.getElementById('resultado-conductor');
+            
+            container.innerHTML = '<div class="loading-state">⏳ Cargando datos...</div>';
             
             try {
                 const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_conductor&${params}`);
@@ -510,9 +527,12 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 
                 if (data.success) {
                     mostrarReporteConductor(data.datos);
+                } else {
+                    container.innerHTML = '<div class="error-state">❌ Error: ' + (data.mensaje || 'No se pudieron cargar los datos') + '</div>';
                 }
             } catch (error) {
                 console.error('Error:', error);
+                container.innerHTML = '<div class="error-state">❌ Error al cargar los datos. Por favor, intenta nuevamente.</div>';
             }
         });
         
@@ -521,6 +541,9 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             e.preventDefault();
             const formData = new FormData(this);
             const params = new URLSearchParams(formData);
+            const container = document.getElementById('resultado-vehiculo');
+            
+            container.innerHTML = '<div class="loading-state">⏳ Cargando datos...</div>';
             
             try {
                 const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_vehiculo&${params}`);
@@ -528,9 +551,12 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 
                 if (data.success) {
                     mostrarReporteVehiculo(data.datos);
+                } else {
+                    container.innerHTML = '<div class="error-state">❌ Error: ' + (data.mensaje || 'No se pudieron cargar los datos') + '</div>';
                 }
             } catch (error) {
                 console.error('Error:', error);
+                container.innerHTML = '<div class="error-state">❌ Error al cargar los datos. Por favor, intenta nuevamente.</div>';
             }
         });
         
@@ -539,6 +565,9 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             e.preventDefault();
             const formData = new FormData(this);
             const params = new URLSearchParams(formData);
+            const container = document.getElementById('resultado-fechas');
+            
+            container.innerHTML = '<div class="loading-state">⏳ Cargando datos...</div>';
             
             try {
                 const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_fechas&${params}`);
@@ -546,9 +575,12 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 
                 if (data.success) {
                     mostrarReporteFechas(data.datos);
+                } else {
+                    container.innerHTML = '<div class="error-state">❌ Error: ' + (data.mensaje || 'No se pudieron cargar los datos') + '</div>';
                 }
             } catch (error) {
                 console.error('Error:', error);
+                container.innerHTML = '<div class="error-state">❌ Error al cargar los datos. Por favor, intenta nuevamente.</div>';
             }
         });
         
@@ -557,6 +589,9 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             e.preventDefault();
             const formData = new FormData(this);
             const params = new URLSearchParams(formData);
+            const container = document.getElementById('resultado-trayectos');
+            
+            container.innerHTML = '<div class="loading-state">⏳ Cargando datos...</div>';
             
             try {
                 const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_trayectos&${params}`);
@@ -564,9 +599,12 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 
                 if (data.success) {
                     mostrarReporteTrayectos(data.datos);
+                } else {
+                    container.innerHTML = '<div class="error-state">❌ Error: ' + (data.mensaje || 'No se pudieron cargar los datos') + '</div>';
                 }
             } catch (error) {
                 console.error('Error:', error);
+                container.innerHTML = '<div class="error-state">❌ Error al cargar los datos. Por favor, intenta nuevamente.</div>';
             }
         });
         
