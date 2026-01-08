@@ -149,6 +149,10 @@ if (!$esAdmin) {
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Reportes</span>
                 </a>
+                <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-text">Incidencias/PQRs</span>
+                </a>
             <?php else: ?>
                 <!-- Menú Conductor -->
                 <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
@@ -166,6 +170,10 @@ if (!$esAdmin) {
                 <a href="<?= APP_URL ?>/public/historial-gastos.php" class="nav-link">
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Historial Gastos</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/incidencias.php" class="nav-link">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-text">Incidencias/PQRs</span>
                 </a>
             <?php endif; ?>
             

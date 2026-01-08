@@ -106,3 +106,25 @@ INSERT INTO vehiculos (placa, marca, modelo, anio, color, tipo, kilometraje) VAL
 ('ABC-123', 'Ford', 'F-150', 2022, 'Blanco', 'Pickup', 15000),
 ('XYZ-789', 'Chevrolet', 'Silverado', 2021, 'Negro', 'Pickup', 28000),
 ('DEF-456', 'Toyota', 'Hilux', 2023, 'Gris', 'Pickup', 5000);
+
+-- Tabla de incidencias/PQRs
+CREATE TABLE IF NOT EXISTS incidencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    tipo_incidencia ENUM('problema_vehiculo', 'accidente', 'queja', 'sugerencia', 'consulta', 'otro') NOT NULL,
+    prioridad ENUM('baja', 'media', 'alta', 'critica') DEFAULT 'media',
+    asunto VARCHAR(255) NOT NULL,
+    descripcion TEXT NOT NULL,
+    estado ENUM('pendiente', 'en_revision', 'resuelta', 'cerrada') DEFAULT 'pendiente',
+    fecha_reporte TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP NULL,
+    respuesta TEXT NULL,
+    respondido_por INT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (respondido_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario (usuario_id),
+    INDEX idx_estado (estado),
+    INDEX idx_prioridad (prioridad),
+    INDEX idx_fecha (fecha_reporte)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

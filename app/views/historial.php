@@ -47,6 +47,10 @@
                 <span class="nav-icon">📊</span>
                 <span class="nav-text">Historial Gastos</span>
             </a>
+            <a href="<?php echo APP_URL; ?>/public/incidencias.php" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-text">Incidencias/PQRs</span>
+            </a>
             <a href="<?php echo APP_URL; ?>/public/index.php?action=logout" class="nav-link nav-logout">
                 <span class="nav-icon">🚪</span>
                 <span class="nav-text">Cerrar Sesión</span>

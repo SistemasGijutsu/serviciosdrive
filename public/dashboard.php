@@ -106,8 +106,10 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                 <a href="<?= APP_URL ?>/public/admin/reportes.php" class="nav-link">
                     <span class="nav-icon">📈</span>
                     <span class="nav-text">Reportes</span>
-                </a>
-            <?php else: ?>
+                </a>                <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-text">Incidencias/PQRs</span>
+                </a>            <?php else: ?>
                 <!-- Menú Conductor -->
                 <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
                     <span class="nav-icon">📝</span>
@@ -124,6 +126,10 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                 <a href="<?= APP_URL ?>/public/historial-gastos.php" class="nav-link">
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Historial Gastos</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/incidencias.php" class="nav-link">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-text">Incidencias/PQRs</span>
                 </a>
             <?php endif; ?>
             <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
