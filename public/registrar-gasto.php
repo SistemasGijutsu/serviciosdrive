@@ -133,7 +133,7 @@ if (!$esAdmin) {
                     <?php unset($_SESSION['error_mensaje']); ?>
                 <?php endif; ?>
                 
-                <form method="POST" action="procesar-gasto.php" class="form-gasto">
+                <form id="formRegistrarGasto" method="POST" action="<?= APP_URL ?>/public/api/gasto.php?action=crear" class="form-gasto">
                     <div class="form-grid">
                         <!-- Tipo de Gasto -->
                         <div class="form-group">
