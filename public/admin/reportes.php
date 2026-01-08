@@ -82,9 +82,42 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 <span class="nav-icon">📋</span>
                 <span class="nav-text">Todos los Servicios</span>
             </a>
-            <a href="<?= APP_URL ?>/public/admin/reportes.php" class="nav-link active">
-                <span class="nav-icon">📈</span>
-                <span class="nav-text">Reportes</span>
+            
+            <!-- Dropdown de Reportes -->
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-toggle active open" id="reportesToggle">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reportes</span>
+                    <span class="nav-dropdown-arrow">▼</span>
+                </button>
+                <div class="nav-dropdown-menu show" id="reportesMenu">
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=resumen" class="nav-link">
+                        <span class="nav-text">📊 Resumen General</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=gastos" class="nav-link">
+                        <span class="nav-text">💰 Reporte de Gastos</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=servicios" class="nav-link">
+                        <span class="nav-text">📋 Reporte de Servicios</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=conductor" class="nav-link">
+                        <span class="nav-text">👤 Por Conductor</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=vehiculo" class="nav-link">
+                        <span class="nav-text">🚗 Por Vehículo</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=fechas" class="nav-link">
+                        <span class="nav-text">📅 Por Fechas</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=trayectos" class="nav-link">
+                        <span class="nav-text">🗺️ Trayectos</span>
+                    </a>
+                </div>
+            </div>
+            
+            <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-text">Incidencias/PQRs</span>
             </a>
             <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
                 <span class="nav-icon">🚪</span>
@@ -104,33 +137,8 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             <p class="text-muted">Análisis completo del sistema</p>
         </div>
         
-        <!-- Pestañas de Reportes -->
-        <div class="reports-tabs">
-            <button class="tab-btn active" onclick="cambiarTab('resumen', event)">
-                <span class="tab-icon">📊</span> Resumen General
-            </button>
-            <button class="tab-btn" onclick="cambiarTab('gastos', event)">
-                <span class="tab-icon">💰</span> Reporte de Gastos
-            </button>
-            <button class="tab-btn" onclick="cambiarTab('servicios', event)">
-                <span class="tab-icon">📋</span> Reporte de Servicios
-            </button>
-            <button class="tab-btn" onclick="cambiarTab('conductor', event)">
-                <span class="tab-icon">👨‍✈️</span> Por Conductor
-            </button>
-            <button class="tab-btn" onclick="cambiarTab('vehiculo', event)">
-                <span class="tab-icon">🚗</span> Por Vehículo
-            </button>
-            <button class="tab-btn" onclick="cambiarTab('fechas', event)">
-                <span class="tab-icon">📅</span> Por Fechas
-            </button>
-            <button class="tab-btn" onclick="cambiarTab('trayectos', event)">
-                <span class="tab-icon">🗺️</span> Trayectos
-            </button>
-        </div>
-        
         <!-- Tab: Resumen General -->
-        <div id="tab-resumen" class="tab-content active">
+        <div id="tab-resumen" class="tab-content <?= (!isset($_GET['tipo']) || $_GET['tipo'] == 'resumen') ? 'active' : '' ?>">
             <h2 class="tab-title">📊 Resumen General</h2>
         <div class="stats-grid">
             <!-- Total Servicios -->
@@ -338,7 +346,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         <!-- Fin Tab: Resumen General -->
         
         <!-- Tab: Reporte de Gastos -->
-        <div id="tab-gastos" class="tab-content">
+        <div id="tab-gastos" class="tab-content <?= (isset($_GET['tipo']) && $_GET['tipo'] == 'gastos') ? 'active' : '' ?>">
             <h2 class="tab-title">💰 Reporte de Gastos</h2>
             
             <div class="filters-card">
@@ -387,7 +395,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         </div>
         
         <!-- Tab: Reporte de Servicios -->
-        <div id="tab-servicios" class="tab-content">
+        <div id="tab-servicios" class="tab-content <?= (isset($_GET['tipo']) && $_GET['tipo'] == 'servicios') ? 'active' : '' ?>">
             <h2 class="tab-title">📋 Reporte de Servicios</h2>
             
             <div class="filters-card">
@@ -436,7 +444,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         </div>
         
         <!-- Tab: Reporte por Conductor -->
-        <div id="tab-conductor" class="tab-content">
+        <div id="tab-conductor" class="tab-content <?= (isset($_GET['tipo']) && $_GET['tipo'] == 'conductor') ? 'active' : '' ?>">
             <h2 class="tab-title">👨‍✈️ Reporte por Conductor</h2>
             
             <div class="filters-card">
@@ -473,7 +481,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         </div>
         
         <!-- Tab: Reporte por Vehículo -->
-        <div id="tab-vehiculo" class="tab-content">
+        <div id="tab-vehiculo" class="tab-content <?= (isset($_GET['tipo']) && $_GET['tipo'] == 'vehiculo') ? 'active' : '' ?>">
             <h2 class="tab-title">🚗 Reporte por Vehículo</h2>
             
             <div class="filters-card">
@@ -510,7 +518,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         </div>
         
         <!-- Tab: Reporte por Fechas -->
-        <div id="tab-fechas" class="tab-content">
+        <div id="tab-fechas" class="tab-content <?= (isset($_GET['tipo']) && $_GET['tipo'] == 'fechas') ? 'active' : '' ?>">
             <h2 class="tab-title">📅 Reporte por Fechas</h2>
             
             <div class="filters-card">
@@ -535,7 +543,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         </div>
         
         <!-- Tab: Trayectos Detallados -->
-        <div id="tab-trayectos" class="tab-content">
+        <div id="tab-trayectos" class="tab-content <?= (isset($_GET['tipo']) && $_GET['tipo'] == 'trayectos') ? 'active' : '' ?>">
             <h2 class="tab-title">🗺️ Reporte de Trayectos</h2>
             
             <div class="filters-card">
@@ -587,34 +595,6 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
     <script>
         const APP_URL = '<?= APP_URL ?>';
-        
-        // Cambiar entre pestañas
-        function cambiarTab(tabName, event) {
-            // Ocultar todas las pestañas
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Mostrar pestaña seleccionada
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            
-            // Activar el botón correspondiente
-            if (event && event.target) {
-                event.target.closest('.tab-btn').classList.add('active');
-            } else {
-                // Si no hay evento, buscar el botón por el nombre de la pestaña
-                const buttons = document.querySelectorAll('.tab-btn');
-                buttons.forEach((btn, index) => {
-                    const tabs = ['resumen', 'gastos', 'servicios', 'conductor', 'vehiculo', 'fechas', 'trayectos'];
-                    if (tabs[index] === tabName) {
-                        btn.classList.add('active');
-                    }
-                });
-            }
-        }
         
         // Reporte de Gastos
         document.getElementById('form-gastos').addEventListener('submit', async function(e) {

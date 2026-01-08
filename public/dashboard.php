@@ -103,13 +103,44 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                     <span class="nav-icon">📋</span>
                     <span class="nav-text">Todos los Servicios</span>
                 </a>
-                <a href="<?= APP_URL ?>/public/admin/reportes.php" class="nav-link">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Reportes</span>
-                </a>                <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                
+                <!-- Dropdown de Reportes -->
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle" id="reportesToggle">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-text">Reportes</span>
+                        <span class="nav-dropdown-arrow">▼</span>
+                    </button>
+                    <div class="nav-dropdown-menu" id="reportesMenu">
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=resumen" class="nav-link">
+                            <span class="nav-text">📊 Resumen General</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=gastos" class="nav-link">
+                            <span class="nav-text">💰 Reporte de Gastos</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=servicios" class="nav-link">
+                            <span class="nav-text">📋 Reporte de Servicios</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=conductor" class="nav-link">
+                            <span class="nav-text">👤 Por Conductor</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=vehiculo" class="nav-link">
+                            <span class="nav-text">🚗 Por Vehículo</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=fechas" class="nav-link">
+                            <span class="nav-text">📅 Por Fechas</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=trayectos" class="nav-link">
+                            <span class="nav-text">🗺️ Trayectos</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
                     <span class="nav-icon">⚠️</span>
                     <span class="nav-text">Incidencias/PQRs</span>
-                </a>            <?php else: ?>
+                </a>
+            <?php else: ?>
                 <!-- Menú Conductor -->
                 <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
                     <span class="nav-icon">📝</span>

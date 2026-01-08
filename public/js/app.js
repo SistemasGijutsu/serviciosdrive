@@ -140,6 +140,18 @@ document.addEventListener('DOMContentLoaded', function() {
             mainContent.classList.toggle('content-expanded');
         });
     }
+    
+    // Toggle dropdown menu de reportes
+    const reportesToggle = document.getElementById('reportesToggle');
+    const reportesMenu = document.getElementById('reportesMenu');
+    
+    if (reportesToggle && reportesMenu) {
+        reportesToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            reportesToggle.classList.toggle('open');
+            reportesMenu.classList.toggle('show');
+        });
+    }
 });
 
 // Modal finalizar servicio
