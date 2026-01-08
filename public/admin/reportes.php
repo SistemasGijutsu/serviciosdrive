@@ -889,6 +889,7 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             html += '<th>Tipo</th>';
             html += '<th>Descripción</th>';
             html += '<th>Monto</th>';
+            html += '<th>Comprobante</th>';
             html += '</tr></thead><tbody>';
             
             datos.forEach(row => {
@@ -900,6 +901,17 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 html += `<td><span class="badge badge-info">${row.tipo_gasto}</span></td>`;
                 html += `<td>${row.descripcion || 'N/A'}</td>`;
                 html += `<td><strong>$${parseFloat(row.monto || 0).toFixed(2)}</strong></td>`;
+                
+                // Mostrar imagen del comprobante
+                if (row.imagen_comprobante) {
+                    html += `<td><a href="${APP_URL}/public/${row.imagen_comprobante}" target="_blank" 
+                        style="display: inline-block; padding: 6px 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                        color: white; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 600;">
+                        📷 Ver imagen</a></td>`;
+                } else {
+                    html += `<td><span style="color: #94a3b8; font-size: 12px;">Sin imagen</span></td>`;
+                }
+                
                 html += '</tr>';
             });
             

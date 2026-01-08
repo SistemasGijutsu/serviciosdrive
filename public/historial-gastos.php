@@ -216,6 +216,7 @@ $etiquetasGasto = [
                                     <th>Vehículo</th>
                                     <th class="text-right">Monto</th>
                                     <th class="text-center">Km</th>
+                                    <th class="text-center">Comprobante</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -258,6 +259,18 @@ $etiquetasGasto = [
                                             <?= number_format($gasto['kilometraje_actual']) ?> km
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if (!empty($gasto['imagen_comprobante'])): ?>
+                                            <a href="<?= APP_URL ?>/public/<?= htmlspecialchars($gasto['imagen_comprobante']) ?>" 
+                                               target="_blank" 
+                                               title="Ver comprobante"
+                                               style="display: inline-block; padding: 6px 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 600; transition: all 0.3s;">
+                                                📷 Ver imagen
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="text-muted" style="font-size: 12px;">Sin imagen</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">

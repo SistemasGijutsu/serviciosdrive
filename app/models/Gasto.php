@@ -16,10 +16,10 @@ class Gasto {
         try {
             $query = "INSERT INTO {$this->table} 
                       (usuario_id, vehiculo_id, sesion_trabajo_id, tipo_gasto, descripcion, 
-                       monto, kilometraje_actual, fecha_gasto, notas) 
+                       monto, kilometraje_actual, fecha_gasto, notas, imagen_comprobante) 
                       VALUES 
                       (:usuario_id, :vehiculo_id, :sesion_trabajo_id, :tipo_gasto, :descripcion, 
-                       :monto, :kilometraje_actual, :fecha_gasto, :notas)";
+                       :monto, :kilometraje_actual, :fecha_gasto, :notas, :imagen_comprobante)";
             
             $stmt = $this->db->prepare($query);
             
@@ -55,6 +55,12 @@ class Gasto {
                 $stmt->bindValue(':notas', $datos['notas'], PDO::PARAM_STR);
             } else {
                 $stmt->bindValue(':notas', null, PDO::PARAM_NULL);
+            }
+
+            if (isset($datos['imagen_comprobante']) && $datos['imagen_comprobante'] !== null) {
+                $stmt->bindValue(':imagen_comprobante', $datos['imagen_comprobante'], PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(':imagen_comprobante', null, PDO::PARAM_NULL);
             }
             
             if ($stmt->execute()) {
@@ -298,7 +304,8 @@ class Gasto {
     public function obtenerGastosFiltrados($filtros = []) {
         try {
             $query = "SELECT g.*, v.placa, v.marca, v.modelo, 
-                             u.nombre, u.apellido
+                             u.nombre, u.apellido,
+                             g.imagen_comprobante
                       FROM {$this->table} g
                       INNER JOIN vehiculos v ON g.vehiculo_id = v.id
                       INNER JOIN usuarios u ON g.usuario_id = u.id
@@ -421,6 +428,7 @@ class Gasto {
                         g.descripcion,
                         g.tipo_gasto,
                         g.monto,
+                        g.imagen_comprobante,
                         CONCAT(u.nombre, ' ', u.apellido) as conductor,
                         v.placa,
                         v.marca,

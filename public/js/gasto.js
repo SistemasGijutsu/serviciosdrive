@@ -21,30 +21,30 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(formRegistrarGasto);
-            const datos = {
-                tipo_gasto: formData.get('tipo_gasto'),
-                descripcion: formData.get('descripcion'),
-                monto: parseFloat(formData.get('monto')),
-                kilometraje_actual: formData.get('kilometraje_actual') ? parseInt(formData.get('kilometraje_actual')) : null,
-                fecha_gasto: formData.get('fecha_gasto') || null,
-                notas: formData.get('notas') || null
-            };
             
             // Validación básica
-            if (!datos.tipo_gasto) {
+            const tipoGasto = formData.get('tipo_gasto');
+            const descripcion = formData.get('descripcion');
+            const monto = parseFloat(formData.get('monto'));
+            const imagenComprobante = formData.get('imagen_comprobante');
+            
+            if (!tipoGasto) {
                 mostrarMensaje('Por favor selecciona un tipo de gasto', 'error');
                 return;
             }
             
-            if (!datos.descripcion || datos.descripcion.trim() === '') {
+            if (!descripcion || descripcion.trim() === '') {
                 mostrarMensaje('La descripción es requerida', 'error');
                 return;
             }
             
-            if (!datos.monto || datos.monto <= 0) {
+            if (!monto || monto <= 0) {
                 mostrarMensaje('El monto debe ser mayor a 0', 'error');
                 return;
             }
+            
+            // Validar imagen solo si se seleccionó una
+            // La imagen ahora es opcional
             
             // Deshabilitar botón mientras se procesa
             const btnGuardar = document.getElementById('btnGuardar');
@@ -53,23 +53,20 @@ document.addEventListener('DOMContentLoaded', function() {
             btnGuardar.innerHTML = '<span>⏳ Guardando...</span>';
             
             try {
-                // Enviar como urlencoded para evitar bloqueos del servidor
-                const params = new URLSearchParams();
-                params.append('tipo_gasto', datos.tipo_gasto);
-                params.append('descripcion', datos.descripcion);
-                params.append('monto', datos.monto);
-                if (datos.kilometraje_actual !== null) params.append('kilometraje_actual', datos.kilometraje_actual);
-                if (datos.fecha_gasto) params.append('fecha_gasto', datos.fecha_gasto);
-                if (datos.notas) params.append('notas', datos.notas);
-
+                // Enviar como FormData para incluir la imagen
                 const response = await fetch(APP_URL + '/public/api/gasto.php?action=crear', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: params.toString(),
+                    body: formData,
                     credentials: 'same-origin'
                 });
+                
+                // Verificar si la respuesta es JSON
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    console.error('Respuesta no JSON:', text);
+                    throw new Error('La respuesta del servidor no es JSON válido');
+                }
                 
                 const resultado = await response.json();
                 
@@ -77,17 +74,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     mostrarMensaje(resultado.mensaje, 'success');
                     formRegistrarGasto.reset();
                     
+                    // Resetear vista previa de imagen
+                    if (typeof cambiarImagen === 'function') {
+                        cambiarImagen();
+                    }
+                    
                     // Redirigir al historial después de 2 segundos
                     setTimeout(() => {
                         window.location.href = APP_URL + '/public/historial-gastos.php';
                     }, 2000);
                 } else {
                     mostrarMensaje(resultado.mensaje || 'Error al registrar el gasto', 'error');
+                    if (resultado.detalles) {
+                        console.error('Detalles del error:', resultado.detalles);
+                    }
                     btnGuardar.disabled = false;
                     btnGuardar.innerHTML = textoOriginal;
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error completo:', error);
                 mostrarMensaje('Error de conexión. Intenta nuevamente.', 'error');
                 btnGuardar.disabled = false;
                 btnGuardar.innerHTML = textoOriginal;

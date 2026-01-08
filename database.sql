@@ -130,3 +130,24 @@ CREATE TABLE IF NOT EXISTS incidencias (
     INDEX idx_fecha (fecha_reporte)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de gastos
+CREATE TABLE IF NOT EXISTS gastos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    vehiculo_id INT NOT NULL,
+    sesion_trabajo_id INT NULL,
+    tipo_gasto VARCHAR(50) NOT NULL,
+    descripcion TEXT NOT NULL,
+    monto DECIMAL(10,2) NOT NULL,
+    kilometraje_actual INT NULL,
+    fecha_gasto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notas TEXT NULL,
+    imagen_comprobante VARCHAR(255) NULL COMMENT 'Ruta de la imagen del comprobante del gasto',
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE,
+    FOREIGN KEY (sesion_trabajo_id) REFERENCES sesiones_trabajo(id) ON DELETE SET NULL,
+    INDEX idx_usuario (usuario_id),
+    INDEX idx_vehiculo (vehiculo_id),
+    INDEX idx_fecha (fecha_gasto),
+    INDEX idx_tipo (tipo_gasto)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

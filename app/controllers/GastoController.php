@@ -2,7 +2,6 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-ob_start();
 
 require_once __DIR__ . '/../models/Gasto.php';
 require_once __DIR__ . '/../models/SesionTrabajo.php';
@@ -20,15 +19,9 @@ class GastoController {
      * Manejar las peticiones según la acción
      */
     public function manejarPeticion() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        if (ob_get_length() !== false) {
-            ob_clean();
-        }
-        
         // Verificar autenticación
         if (!isset($_SESSION['usuario_id'])) {
+            header('Content-Type: application/json');
             http_response_code(401);
             echo json_encode(['success' => false, 'mensaje' => 'No autorizado']);
             exit;
@@ -63,6 +56,7 @@ class GastoController {
                 break;
             
             default:
+                header('Content-Type: application/json');
                 http_response_code(405);
                 echo json_encode(['success' => false, 'mensaje' => 'Método no permitido']);
         }
@@ -75,55 +69,40 @@ class GastoController {
         header('Content-Type: application/json');
         
         try {
-            $raw = file_get_contents('php://input');
-            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-
-            if (stripos($contentType, 'application/json') !== false) {
-                $datos = json_decode($raw, true);
-            } else {
-                // Soporta application/x-www-form-urlencoded y fallback
-                parse_str($raw, $parsed);
-                // Si no hay body raw, usar $_POST
-                $datos = !empty($parsed) ? $parsed : $_POST;
-            }
-
-            // Verificar datos recibidos
-            if (empty($datos) || !is_array($datos)) {
+            // Obtener datos del POST (multipart/form-data)
+            $datos = $_POST;
+            
+            // Validar campos requeridos
+            if (empty($datos['tipo_gasto']) || empty($datos['descripcion']) || empty($datos['monto'])) {
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'mensaje' => 'Cuerpo de la petición vacío o inválido'
-                ]);
-                return;
-            }
-
-            // Validaciones
-            $errores = $this->validarDatosGasto($datos);
-            if (!empty($errores)) {
-                http_response_code(400);
-                echo json_encode([
-                    'success' => false,
-                    'mensaje' => 'Datos inválidos',
-                    'errores' => $errores
+                    'mensaje' => 'Faltan campos requeridos: tipo_gasto, descripcion, monto'
                 ]);
                 return;
             }
             
-            // Obtener sesión activa si existe
+            // Manejar imagen si existe
+            $imagen_comprobante = null;
+            if (isset($_FILES['imagen_comprobante']) && $_FILES['imagen_comprobante']['error'] === UPLOAD_ERR_OK) {
+                $resultado_upload = $this->subirImagenComprobante($_FILES['imagen_comprobante']);
+                if ($resultado_upload['success']) {
+                    $imagen_comprobante = $resultado_upload['ruta'];
+                }
+            }
+            
+            // Obtener sesión activa
             $sesionActiva = $this->sesionModel->obtenerSesionActiva($_SESSION['usuario_id']);
             
-            // Determinar vehículo y sesión
+            // Determinar vehículo
             if ($sesionActiva) {
-                // Si hay sesión activa, usar ese vehículo
                 $vehiculo_id = $sesionActiva['vehiculo_id'];
                 $sesion_trabajo_id = $sesionActiva['id'];
             } else {
-                // Sin sesión activa: usar vehículo asignado del usuario
+                // Usar vehículo de sesión o el primero disponible
                 if (isset($_SESSION['vehiculo_id']) && !empty($_SESSION['vehiculo_id'])) {
                     $vehiculo_id = $_SESSION['vehiculo_id'];
-                    $sesion_trabajo_id = null;
                 } else {
-                    // Fallback: buscar vehículo disponible
                     require_once __DIR__ . '/../models/Vehiculo.php';
                     $vehiculoModel = new Vehiculo();
                     $vehiculos = $vehiculoModel->obtenerActivos();
@@ -132,17 +111,17 @@ class GastoController {
                         http_response_code(400);
                         echo json_encode([
                             'success' => false,
-                            'mensaje' => 'No hay vehículos disponibles. Por favor contacta al administrador.'
+                            'mensaje' => 'No hay vehículos disponibles'
                         ]);
                         return;
                     }
                     
                     $vehiculo_id = $vehiculos[0]['id'];
-                    $sesion_trabajo_id = null;
                 }
+                $sesion_trabajo_id = null;
             }
             
-            // Preparar datos para crear el gasto
+            // Preparar datos para inserción
             $datosGasto = [
                 'usuario_id' => $_SESSION['usuario_id'],
                 'vehiculo_id' => $vehiculo_id,
@@ -152,17 +131,18 @@ class GastoController {
                 'monto' => $datos['monto'],
                 'kilometraje_actual' => $datos['kilometraje_actual'] ?? null,
                 'fecha_gasto' => $datos['fecha_gasto'] ?? date('Y-m-d H:i:s'),
-                'notas' => $datos['notas'] ?? null
+                'notas' => $datos['notas'] ?? null,
+                'imagen_comprobante' => $imagen_comprobante
             ];
-            
+
             $resultado = $this->gastoModel->crear($datosGasto);
-            
+
             if ($resultado['success']) {
                 http_response_code(201);
             } else {
                 http_response_code(500);
             }
-            
+
             echo json_encode($resultado);
             
         } catch (Exception $e) {
@@ -170,7 +150,8 @@ class GastoController {
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'mensaje' => 'Error interno del servidor'
+                'mensaje' => 'Error interno del servidor',
+                'detalles' => $e->getMessage()
             ]);
         }
     }
@@ -400,6 +381,65 @@ class GastoController {
         }
         
         return $errores;
+    }
+    
+    /**
+     * Subir imagen de comprobante de gasto
+     */
+    private function subirImagenComprobante($archivo) {
+        try {
+            // Validar tipo de archivo
+            $tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!in_array($archivo['type'], $tiposPermitidos)) {
+                return [
+                    'success' => false,
+                    'mensaje' => 'Tipo de archivo no permitido. Solo se permiten imágenes JPG, PNG y WEBP'
+                ];
+            }
+            
+            // Validar tamaño (máximo 5MB)
+            $tamañoMaximo = 5 * 1024 * 1024; // 5MB
+            if ($archivo['size'] > $tamañoMaximo) {
+                return [
+                    'success' => false,
+                    'mensaje' => 'El archivo es demasiado grande. Tamaño máximo: 5MB'
+                ];
+            }
+            
+            // Generar nombre único para el archivo
+            $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+            $nombreArchivo = 'gasto_' . $_SESSION['usuario_id'] . '_' . time() . '_' . uniqid() . '.' . $extension;
+            
+            // Ruta de destino
+            $directorioDestino = __DIR__ . '/../../public/uploads/gastos/';
+            $rutaCompleta = $directorioDestino . $nombreArchivo;
+            
+            // Crear directorio si no existe
+            if (!is_dir($directorioDestino)) {
+                mkdir($directorioDestino, 0755, true);
+            }
+            
+            // Mover archivo
+            if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
+                // Retornar ruta relativa para guardar en BD
+                return [
+                    'success' => true,
+                    'ruta' => 'uploads/gastos/' . $nombreArchivo
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'mensaje' => 'Error al subir el archivo'
+                ];
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error al subir imagen: " . $e->getMessage());
+            return [
+                'success' => false,
+                'mensaje' => 'Error al procesar la imagen'
+            ];
+        }
     }
 }
 

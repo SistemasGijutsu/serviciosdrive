@@ -359,9 +359,47 @@ if (!$esAdmin) {
                         ></textarea>
                     </div>
                     
+                    <!-- Imagen del Comprobante -->
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label for="imagenComprobante" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                            <span style="color: #10b981;">📷</span> Imagen del Comprobante (Opcional)
+                        </label>
+                        <div style="border: 2px dashed #e2e8f0; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; transition: all 0.3s;" id="dropZone">
+                            <input 
+                                type="file" 
+                                id="imagenComprobante" 
+                                name="imagen_comprobante" 
+                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                style="display: none;"
+                            >
+                            <div id="filePreview" style="display: none;">
+                                <img id="previewImage" src="" alt="Vista previa" style="max-width: 300px; max-height: 300px; border-radius: 8px; margin-bottom: 15px;">
+                                <p style="color: #10b981; font-weight: 600; margin: 10px 0;" id="fileName"></p>
+                                <button type="button" onclick="cambiarImagen()" style="background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px;">
+                                    🔄 Cambiar imagen
+                                </button>
+                            </div>
+                            <div id="uploadPrompt">
+                                <div style="font-size: 48px; margin-bottom: 15px;">📸</div>
+                                <p style="color: #64748b; font-size: 15px; margin-bottom: 12px;">
+                                    <strong>Toca aquí para subir la foto del comprobante</strong>
+                                </p>
+                                <p style="color: #94a3b8; font-size: 13px;">
+                                    Formatos permitidos: JPG, PNG, WEBP (máximo 5MB)
+                                </p>
+                                <button type="button" onclick="document.getElementById('imagenComprobante').click()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 14px 28px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                                    📂 Seleccionar Imagen
+                                </button>
+                            </div>
+                        </div>
+                        <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">
+                            Sube una foto del ticket o comprobante del gasto (opcional)
+                        </small>
+                    </div>
+                    
                     <!-- Botones -->
                     <div class="form-actions" style="display: flex; gap: 16px; padding-top: 24px; border-top: 2px solid #f1f5f9;">
-                        <button type="submit" class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 18px 32px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <button type="submit" id="btnGuardar" class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 18px 32px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
                             <span style="font-size: 20px;">💾</span> Registrar Gasto
                         </button>
                         <a href="historial-gastos.php" style="flex: 0.4; background: #f1f5f9; color: #64748b; padding: 18px 32px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -408,6 +446,10 @@ if (!$esAdmin) {
         <?php endif; ?>
     </main>
     
+    <script>
+        // Definir APP_URL globalmente
+        const APP_URL = '<?= APP_URL ?>';
+    </script>
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
     <script src="<?= APP_URL ?>/public/js/gasto.js"></script>
     <script>
@@ -484,6 +526,85 @@ if (!$esAdmin) {
                 this.style.boxShadow = 'none';
             });
         });
+        
+        // Manejo de la imagen del comprobante
+        const inputImagen = document.getElementById('imagenComprobante');
+        const dropZone = document.getElementById('dropZone');
+        const filePreview = document.getElementById('filePreview');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        
+        inputImagen.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                mostrarVistaPrevia(file);
+            }
+        });
+        
+        // Drag and drop
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#10b981';
+            this.style.background = '#f0fdf4';
+        });
+        
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#e2e8f0';
+            this.style.background = '#f8fafc';
+        });
+        
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#e2e8f0';
+            this.style.background = '#f8fafc';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                inputImagen.files = e.dataTransfer.files;
+                mostrarVistaPrevia(file);
+            } else {
+                mostrarMensaje('Por favor sube una imagen válida', 'error');
+            }
+        });
+        
+        // Click en la zona de drop
+        dropZone.addEventListener('click', function(e) {
+            if (e.target === dropZone || e.target.closest('#uploadPrompt')) {
+                inputImagen.click();
+            }
+        });
+        
+        function mostrarVistaPrevia(file) {
+            // Validar tamaño
+            if (file.size > 5 * 1024 * 1024) {
+                mostrarMensaje('La imagen es demasiado grande. Máximo 5MB', 'error');
+                return;
+            }
+            
+            // Validar tipo
+            const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!tiposPermitidos.includes(file.type)) {
+                mostrarMensaje('Tipo de archivo no permitido. Solo JPG, PNG y WEBP', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                fileName.textContent = file.name;
+                uploadPrompt.style.display = 'none';
+                filePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function cambiarImagen() {
+            inputImagen.value = '';
+            uploadPrompt.style.display = 'block';
+            filePreview.style.display = 'none';
+        }
     </script>
 </body>
 </html>
