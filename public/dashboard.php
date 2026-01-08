@@ -54,6 +54,17 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
 <body>
     <!-- Mensaje flotante -->
     <div id="mensaje" class="mensaje"></div>
+    <?php if (isset($_SESSION['mensaje'])): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            mostrarMensaje('<?= addslashes($_SESSION['mensaje']) ?>', '<?= $_SESSION['tipo_mensaje'] ?? 'info' ?>');
+        });
+    </script>
+    <?php 
+        unset($_SESSION['mensaje']);
+        unset($_SESSION['tipo_mensaje']);
+    endif; 
+    ?>
     
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
@@ -179,7 +190,12 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                 <div class="no-servicio-card">
                     <div class="no-servicio-icon">📝</div>
                     <h3>No tienes una sesión activa</h3>
-                    <p>Comienza una nueva sesión de trabajo para registrar tus servicios</p>
+                    <?php if (isset($_SESSION['vehiculo_info'])): ?>
+                        <p>Vehículo asignado: <strong><?= htmlspecialchars($_SESSION['vehiculo_info']) ?></strong></p>
+                        <p>Haz clic para iniciar una nueva sesión de trabajo</p>
+                    <?php else: ?>
+                        <p>Comienza una nueva sesión de trabajo para registrar tus servicios</p>
+                    <?php endif; ?>
                     <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="btn-iniciar-servicio">
                         <span>➕</span> Iniciar Nueva Sesión
                     </a>
@@ -305,18 +321,20 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
     
     <!-- Modal Finalizar Sesión -->
     <?php if ($sesionActiva): ?>
-    <div id="modalFinalizar" class="modal-overlay">
+    <div id="modalFinalizar" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2 class="modal-title">
                 <span>✓</span> Finalizar Sesión
             </h2>
             
             <form id="formFinalizarServicio" method="POST" action="<?= APP_URL ?>/public/registrar-servicio.php?action=finalizar">
+                <input type="hidden" name="sesion_id" value="<?= $sesionActiva['id'] ?>">
+                
                 <div class="form-group">
                     <label class="form-label">
                         🛣️ Kilometraje Final *
                     </label>
-                    <input type="number" name="kilometraje_fin" required step="0.1" placeholder="Ej: 12450.5" class="form-input">
+                    <input type="number" name="kilometraje_fin" id="kilometraje_fin" required step="0.1" min="<?= $sesionActiva['kilometraje_inicio'] ?? 0 ?>" placeholder="Ej: 12450.5" class="form-input">
                     <small class="form-hint">Kilometraje inicial: <?= $sesionActiva['kilometraje_inicio'] ?? 'N/A' ?></small>
                 </div>
                 

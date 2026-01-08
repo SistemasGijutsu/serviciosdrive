@@ -14,18 +14,15 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
 $vehiculoInfo = $_SESSION['vehiculo_info'] ?? 'Sin vehículo asignado';
 $esAdmin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2;
 
-// Verificar sesión activa (solo para conductores)
+// No se requiere sesión activa para registrar gastos
 $sesionModel = new SesionTrabajo();
 $sesionActiva = null;
 $mensajeError = null;
 
+// Los gastos pueden registrarse en cualquier momento
 if (!$esAdmin) {
-    // Solo verificar sesión para conductores
+    // Obtener sesión si existe (para mostrar info), pero NO es obligatoria
     $sesionActiva = $sesionModel->obtenerSesionActiva($_SESSION['usuario_id']);
-    
-    if (!$sesionActiva) {
-        $mensajeError = "No tienes una sesión de trabajo activa. Por favor, inicia sesión desde el dashboard.";
-    }
 } else {
     // Para administradores, crear una "sesión virtual" para mostrar info
     $sesionActiva = [
@@ -113,16 +110,18 @@ if (!$esAdmin) {
                 </div>
             <?php else: ?>
                 
-            <!-- Información de la sesión -->
+            <!-- Información del vehículo -->
             <div class="info-card">
                 <div class="info-item">
-                    <span class="info-label">Vehículo:</span>
+                    <span class="info-label">🚗 Vehículo:</span>
                     <span class="info-value"><?= htmlspecialchars($vehiculoInfo) ?></span>
                 </div>
+                <?php if ($sesionActiva && isset($sesionActiva['fecha_inicio'])): ?>
                 <div class="info-item">
-                    <span class="info-label">Sesión iniciada:</span>
+                    <span class="info-label">🕐 Sesión iniciada:</span>
                     <span class="info-value"><?= date('d/m/Y H:i', strtotime($sesionActiva['fecha_inicio'])) ?></span>
                 </div>
+                <?php endif; ?>
             </div>
             
             <!-- Formulario de Registro de Gasto -->

@@ -37,40 +37,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Formulario para finalizar servicio
+    // Formulario para finalizar servicio - Submit normal (no AJAX)
     const formFinalizar = document.getElementById('formFinalizarServicio');
     if (formFinalizar) {
-        
-        formFinalizar.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const btnSubmit = this.querySelector('button[type="submit"]');
-            
-            setButtonLoading(btnSubmit, true);
-            
-            try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: new URLSearchParams(formData)
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    mostrarMensaje(data.message, 'success');
-                    setTimeout(() => {
-                        window.location.href = data.redirect;
-                    }, 800);
-                } else {
-                    mostrarMensaje(data.message, 'error');
-                    setButtonLoading(btnSubmit, false);
+        formFinalizar.addEventListener('submit', function(e) {
+            // Validar kilometraje antes de enviar
+            const kmFinal = document.querySelector('input[name="kilometraje_fin"]');
+            if (kmFinal && kmFinal.value) {
+                const kmValue = parseFloat(kmFinal.value);
+                if (kmValue <= 0 || isNaN(kmValue)) {
+                    e.preventDefault();
+                    mostrarMensaje('El kilometraje final debe ser un número válido mayor a 0', 'error');
+                    return;
                 }
-            } catch (error) {
-                console.error('Error completo:', error);
-                mostrarMensaje('Error al conectar con el servidor', 'error');
-                setButtonLoading(btnSubmit, false);
+            } else if (kmFinal) {
+                e.preventDefault();
+                mostrarMensaje('El kilometraje final es obligatorio', 'error');
+                return;
             }
+            
+            // Deshabilitar botón para evitar doble envío
+            const btnSubmit = this.querySelector('button[type="submit"]');
+            if (btnSubmit) {
+                setButtonLoading(btnSubmit, true);
+            }
+            
+            // Permitir que el formulario se envíe normalmente
+            // No se hace e.preventDefault() aquí
         });
     }
     

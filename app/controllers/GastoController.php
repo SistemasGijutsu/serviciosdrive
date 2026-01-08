@@ -109,14 +109,21 @@ class GastoController {
                 return;
             }
             
-            // Obtener sesión activa del usuario
+            // Obtener sesión activa si existe
             $sesionActiva = $this->sesionModel->obtenerSesionActiva($_SESSION['usuario_id']);
             
-            // Si no hay sesión activa, verificar si es administrador
-            if (!$sesionActiva) {
-                // Si es administrador, permitir registro sin sesión (usar vehículo por defecto)
-                if (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2) {
-                    // Buscar un vehículo activo para usar
+            // Determinar vehículo y sesión
+            if ($sesionActiva) {
+                // Si hay sesión activa, usar ese vehículo
+                $vehiculo_id = $sesionActiva['vehiculo_id'];
+                $sesion_trabajo_id = $sesionActiva['id'];
+            } else {
+                // Sin sesión activa: usar vehículo asignado del usuario
+                if (isset($_SESSION['vehiculo_id']) && !empty($_SESSION['vehiculo_id'])) {
+                    $vehiculo_id = $_SESSION['vehiculo_id'];
+                    $sesion_trabajo_id = null;
+                } else {
+                    // Fallback: buscar vehículo disponible
                     require_once __DIR__ . '/../models/Vehiculo.php';
                     $vehiculoModel = new Vehiculo();
                     $vehiculos = $vehiculoModel->obtenerActivos();
@@ -125,24 +132,14 @@ class GastoController {
                         http_response_code(400);
                         echo json_encode([
                             'success' => false,
-                            'mensaje' => 'No hay vehículos disponibles en el sistema'
+                            'mensaje' => 'No hay vehículos disponibles. Por favor contacta al administrador.'
                         ]);
                         return;
                     }
                     
                     $vehiculo_id = $vehiculos[0]['id'];
                     $sesion_trabajo_id = null;
-                } else {
-                    http_response_code(400);
-                    echo json_encode([
-                        'success' => false,
-                        'mensaje' => 'No tienes una sesión de trabajo activa'
-                    ]);
-                    return;
                 }
-            } else {
-                $vehiculo_id = $sesionActiva['vehiculo_id'];
-                $sesion_trabajo_id = $sesionActiva['id'];
             }
             
             // Preparar datos para crear el gasto

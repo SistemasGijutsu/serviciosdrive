@@ -89,7 +89,7 @@ class AuthController {
             return;
         }
         
-        // Paso 2: Crear sesión de trabajo
+        // Paso 2: Asignar vehículo (NO crear sesión automáticamente)
         if ($step === '2') {
             $vehiculo_id = $_POST['vehiculo_id'] ?? '';
             
@@ -113,30 +113,23 @@ class AuthController {
                 return;
             }
             
-            // Crear sesión de trabajo
-            $sesion_id = $this->sesionTrabajoModel->iniciarSesion($datosUsuario['id'], $vehiculo_id);
+            // Crear sesión de usuario (SIN crear sesión de trabajo)
+            $_SESSION['usuario_id'] = $datosUsuario['id'];
+            $_SESSION['usuario'] = $datosUsuario['usuario'];
+            $_SESSION['nombre_completo'] = $datosUsuario['nombre'] . ' ' . $datosUsuario['apellido'];
+            $_SESSION['rol_id'] = $datosUsuario['rol_id'];
+            $_SESSION['vehiculo_id'] = $vehiculo_id;
+            $_SESSION['vehiculo_info'] = $vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa'];
+            $_SESSION['tiempo_login'] = time();
             
-            if ($sesion_id) {
-                // Crear sesión de usuario
-                $_SESSION['usuario_id'] = $datosUsuario['id'];
-                $_SESSION['usuario'] = $datosUsuario['usuario'];
-                $_SESSION['nombre_completo'] = $datosUsuario['nombre'] . ' ' . $datosUsuario['apellido'];
-                $_SESSION['vehiculo_id'] = $vehiculo_id;
-                $_SESSION['vehiculo_info'] = $vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa'];
-                $_SESSION['sesion_trabajo_id'] = $sesion_id;
-                $_SESSION['tiempo_login'] = time();
-                
-                // Limpiar datos temporales
-                unset($_SESSION['temp_usuario']);
-                
-                $this->responderJSON([
-                    'success' => true,
-                    'message' => '¡Bienvenido! Sesión iniciada correctamente',
-                    'redirect' => APP_URL . '/public/dashboard.php'
-                ]);
-            } else {
-                $this->responderJSON(['success' => false, 'message' => 'No se pudo iniciar la sesión de trabajo']);
-            }
+            // Limpiar datos temporales
+            unset($_SESSION['temp_usuario']);
+            
+            $this->responderJSON([
+                'success' => true,
+                'message' => '¡Bienvenido!',
+                'redirect' => APP_URL . '/public/dashboard.php'
+            ]);
         }
     }
     
@@ -144,11 +137,11 @@ class AuthController {
      * Cerrar sesión
      */
     public function logout() {
-        // Finalizar sesión de trabajo si existe
-        if (isset($_SESSION['sesion_trabajo_id'])) {
-            $this->sesionTrabajoModel->finalizarSesion($_SESSION['sesion_trabajo_id']);
-        }
+        // NO finalizar automáticamente la sesión de trabajo
+        // El conductor debe finalizarla manualmente desde el dashboard
+        // Esto permite que la sesión persista entre inicios de sesión
         
+        // Solo destruir la sesión PHP
         session_destroy();
         header('Location: ' . APP_URL . '/public/index.php');
         exit;
