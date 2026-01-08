@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../app/models/Servicio.php';
+require_once __DIR__ . '/../../app/models/Gasto.php';
 require_once __DIR__ . '/../../app/models/Usuario.php';
 require_once __DIR__ . '/../../app/models/Vehiculo.php';
 
@@ -17,6 +18,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol_id'] != 2) {
 }
 
 $servicioModel = new Servicio();
+$gastoModel = new Gasto();
 $usuarioModel = new Usuario();
 $vehiculoModel = new Vehiculo();
 
@@ -61,6 +63,34 @@ switch ($action) {
         echo json_encode(['success' => true, 'datos' => $datos]);
         break;
         
+    case 'reporte_gastos':
+        $filtros = [
+            'usuario_id' => $_GET['usuario_id'] ?? null,
+            'vehiculo_id' => $_GET['vehiculo_id'] ?? null,
+            'fecha_desde' => $_GET['fecha_desde'] ?? null,
+            'fecha_hasta' => $_GET['fecha_hasta'] ?? null,
+            'tipo_gasto' => $_GET['tipo_gasto'] ?? null,
+            'limite' => $_GET['limite'] ?? 100
+        ];
+        
+        $datos = $gastoModel->obtenerReporteGastos($filtros);
+        echo json_encode(['success' => true, 'datos' => $datos]);
+        break;
+        
+    case 'reporte_servicios':
+        $filtros = [
+            'usuario_id' => $_GET['usuario_id'] ?? null,
+            'vehiculo_id' => $_GET['vehiculo_id'] ?? null,
+            'fecha_desde' => $_GET['fecha_desde'] ?? null,
+            'fecha_hasta' => $_GET['fecha_hasta'] ?? null,
+            'tipo_servicio' => $_GET['tipo_servicio'] ?? null,
+            'limite' => $_GET['limite'] ?? 100
+        ];
+        
+        $datos = $servicioModel->obtenerReporteServicios($filtros);
+        echo json_encode(['success' => true, 'datos' => $datos]);
+        break;
+        
     case 'obtener_conductores':
         $conductores = $usuarioModel->obtenerTodos();
         $conductores = array_filter($conductores, function($u) {
@@ -78,3 +108,4 @@ switch ($action) {
         echo json_encode(['success' => false, 'mensaje' => 'Acción no válida']);
         break;
 }
+

@@ -449,4 +449,107 @@ class Servicio {
             return [];
         }
     }
+    
+    /**
+     * Obtener reporte de servicios con filtros
+     * Retorna: CONDUCTOR, PLACA, FECHA, DESCRIPCION, TIEMPO (duración)
+     */
+    public function obtenerReporteServicios($filtros = []) {
+        try {
+            $query = "SELECT 
+                        s.id,
+                        s.fecha_servicio,
+                        s.origen,
+                        s.destino,
+                        CONCAT(s.origen, ' → ', s.destino) as descripcion,
+                        s.tipo_servicio,
+                        s.kilometros_recorridos,
+                        s.hora_inicio,
+                        s.hora_fin,
+                        CASE 
+                            WHEN s.hora_inicio IS NOT NULL AND s.hora_fin IS NOT NULL 
+                            THEN TIMESTAMPDIFF(MINUTE, s.hora_inicio, s.hora_fin)
+                            ELSE NULL
+                        END as duracion_minutos,
+                        CASE 
+                            WHEN s.hora_inicio IS NOT NULL AND s.hora_fin IS NOT NULL 
+                            THEN CONCAT(
+                                FLOOR(TIMESTAMPDIFF(MINUTE, s.hora_inicio, s.hora_fin) / 60), 'h ',
+                                MOD(TIMESTAMPDIFF(MINUTE, s.hora_inicio, s.hora_fin), 60), 'm'
+                            )
+                            ELSE 'No registrado'
+                        END as tiempo_formato,
+                        CONCAT(u.nombre, ' ', u.apellido) as conductor,
+                        v.placa,
+                        v.marca,
+                        v.modelo,
+                        CONCAT(v.marca, ' ', v.modelo) as vehiculo
+                      FROM {$this->table} s
+                      INNER JOIN usuarios u ON s.usuario_id = u.id
+                      INNER JOIN vehiculos v ON s.vehiculo_id = v.id
+                      WHERE 1=1";
+            
+            // Agregar filtros opcionales
+            if (!empty($filtros['usuario_id'])) {
+                $query .= " AND s.usuario_id = :usuario_id";
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $query .= " AND s.vehiculo_id = :vehiculo_id";
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $query .= " AND DATE(s.fecha_servicio) >= :fecha_desde";
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $query .= " AND DATE(s.fecha_servicio) <= :fecha_hasta";
+            }
+            
+            if (!empty($filtros['tipo_servicio'])) {
+                $query .= " AND s.tipo_servicio = :tipo_servicio";
+            }
+            
+            $query .= " ORDER BY s.fecha_servicio DESC";
+            
+            if (!empty($filtros['limite'])) {
+                $query .= " LIMIT :limite";
+            }
+            
+            $stmt = $this->db->prepare($query);
+            
+            // Vincular parámetros
+            if (!empty($filtros['usuario_id'])) {
+                $stmt->bindValue(':usuario_id', $filtros['usuario_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $stmt->bindValue(':vehiculo_id', $filtros['vehiculo_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $stmt->bindValue(':fecha_desde', $filtros['fecha_desde'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $stmt->bindValue(':fecha_hasta', $filtros['fecha_hasta'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['tipo_servicio'])) {
+                $stmt->bindValue(':tipo_servicio', $filtros['tipo_servicio'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['limite'])) {
+                $stmt->bindValue(':limite', $filtros['limite'], PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener reporte de servicios: " . $e->getMessage());
+            return [];
+        }
+    }
 }
+

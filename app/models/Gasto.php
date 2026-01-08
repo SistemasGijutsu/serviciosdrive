@@ -408,4 +408,90 @@ class Gasto {
             return [];
         }
     }
+    
+    /**
+     * Obtener reporte de gastos con filtros
+     * Retorna: CONDUCTOR, PLACA, FECHA, DESCRIPCION
+     */
+    public function obtenerReporteGastos($filtros = []) {
+        try {
+            $query = "SELECT 
+                        g.id,
+                        g.fecha_gasto,
+                        g.descripcion,
+                        g.tipo_gasto,
+                        g.monto,
+                        CONCAT(u.nombre, ' ', u.apellido) as conductor,
+                        v.placa,
+                        v.marca,
+                        v.modelo,
+                        CONCAT(v.marca, ' ', v.modelo) as vehiculo
+                      FROM {$this->table} g
+                      INNER JOIN usuarios u ON g.usuario_id = u.id
+                      INNER JOIN vehiculos v ON g.vehiculo_id = v.id
+                      WHERE 1=1";
+            
+            // Agregar filtros opcionales
+            if (!empty($filtros['usuario_id'])) {
+                $query .= " AND g.usuario_id = :usuario_id";
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $query .= " AND g.vehiculo_id = :vehiculo_id";
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $query .= " AND DATE(g.fecha_gasto) >= :fecha_desde";
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $query .= " AND DATE(g.fecha_gasto) <= :fecha_hasta";
+            }
+            
+            if (!empty($filtros['tipo_gasto'])) {
+                $query .= " AND g.tipo_gasto = :tipo_gasto";
+            }
+            
+            $query .= " ORDER BY g.fecha_gasto DESC";
+            
+            if (!empty($filtros['limite'])) {
+                $query .= " LIMIT :limite";
+            }
+            
+            $stmt = $this->db->prepare($query);
+            
+            // Vincular parámetros
+            if (!empty($filtros['usuario_id'])) {
+                $stmt->bindValue(':usuario_id', $filtros['usuario_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $stmt->bindValue(':vehiculo_id', $filtros['vehiculo_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $stmt->bindValue(':fecha_desde', $filtros['fecha_desde'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $stmt->bindValue(':fecha_hasta', $filtros['fecha_hasta'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['tipo_gasto'])) {
+                $stmt->bindValue(':tipo_gasto', $filtros['tipo_gasto'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['limite'])) {
+                $stmt->bindValue(':limite', $filtros['limite'], PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener reporte de gastos: " . $e->getMessage());
+            return [];
+        }
+    }
 }
+

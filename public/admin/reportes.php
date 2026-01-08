@@ -109,6 +109,12 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
             <button class="tab-btn active" onclick="cambiarTab('resumen', event)">
                 <span class="tab-icon">📊</span> Resumen General
             </button>
+            <button class="tab-btn" onclick="cambiarTab('gastos', event)">
+                <span class="tab-icon">💰</span> Reporte de Gastos
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('servicios', event)">
+                <span class="tab-icon">📋</span> Reporte de Servicios
+            </button>
             <button class="tab-btn" onclick="cambiarTab('conductor', event)">
                 <span class="tab-icon">👨‍✈️</span> Por Conductor
             </button>
@@ -331,6 +337,104 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
         </div>
         <!-- Fin Tab: Resumen General -->
         
+        <!-- Tab: Reporte de Gastos -->
+        <div id="tab-gastos" class="tab-content">
+            <h2 class="tab-title">💰 Reporte de Gastos</h2>
+            
+            <div class="filters-card">
+                <form id="form-gastos" class="filters-form">
+                    <div class="filter-group">
+                        <label class="filter-label">Conductor</label>
+                        <select name="usuario_id" class="filter-select">
+                            <option value="">Todos los conductores</option>
+                            <?php foreach ($conductores as $conductor): ?>
+                                <option value="<?= $conductor['id'] ?>">
+                                    <?= htmlspecialchars($conductor['nombre'] . ' ' . $conductor['apellido']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Vehículo</label>
+                        <select name="vehiculo_id" class="filter-select">
+                            <option value="">Todos los vehículos</option>
+                            <?php foreach ($vehiculos as $vehiculo): ?>
+                                <option value="<?= $vehiculo['id'] ?>">
+                                    <?= htmlspecialchars($vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" class="filter-input">
+                    </div>
+                    
+                    <button type="submit" class="btn-filter">
+                        <span>🔍</span> Generar Reporte
+                    </button>
+                </form>
+            </div>
+            
+            <div id="resultado-gastos" class="report-results"></div>
+        </div>
+        
+        <!-- Tab: Reporte de Servicios -->
+        <div id="tab-servicios" class="tab-content">
+            <h2 class="tab-title">📋 Reporte de Servicios</h2>
+            
+            <div class="filters-card">
+                <form id="form-servicios" class="filters-form">
+                    <div class="filter-group">
+                        <label class="filter-label">Conductor</label>
+                        <select name="usuario_id" class="filter-select">
+                            <option value="">Todos los conductores</option>
+                            <?php foreach ($conductores as $conductor): ?>
+                                <option value="<?= $conductor['id'] ?>">
+                                    <?= htmlspecialchars($conductor['nombre'] . ' ' . $conductor['apellido']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Vehículo</label>
+                        <select name="vehiculo_id" class="filter-select">
+                            <option value="">Todos los vehículos</option>
+                            <?php foreach ($vehiculos as $vehiculo): ?>
+                                <option value="<?= $vehiculo['id'] ?>">
+                                    <?= htmlspecialchars($vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" class="filter-input">
+                    </div>
+                    
+                    <button type="submit" class="btn-filter">
+                        <span>🔍</span> Generar Reporte
+                    </button>
+                </form>
+            </div>
+            
+            <div id="resultado-servicios" class="report-results"></div>
+        </div>
+        
         <!-- Tab: Reporte por Conductor -->
         <div id="tab-conductor" class="tab-content">
             <h2 class="tab-title">👨‍✈️ Reporte por Conductor</h2>
@@ -504,13 +608,61 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 // Si no hay evento, buscar el botón por el nombre de la pestaña
                 const buttons = document.querySelectorAll('.tab-btn');
                 buttons.forEach((btn, index) => {
-                    const tabs = ['resumen', 'conductor', 'vehiculo', 'fechas', 'trayectos'];
+                    const tabs = ['resumen', 'gastos', 'servicios', 'conductor', 'vehiculo', 'fechas', 'trayectos'];
                     if (tabs[index] === tabName) {
                         btn.classList.add('active');
                     }
                 });
             }
         }
+        
+        // Reporte de Gastos
+        document.getElementById('form-gastos').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            const container = document.getElementById('resultado-gastos');
+            
+            container.innerHTML = '<div class="loading-state">⏳ Cargando datos...</div>';
+            
+            try {
+                const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_gastos&${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporteGastos(data.datos);
+                } else {
+                    container.innerHTML = '<div class="error-state">❌ Error: ' + (data.mensaje || 'No se pudieron cargar los datos') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<div class="error-state">❌ Error al cargar los datos. Por favor, intenta nuevamente.</div>';
+            }
+        });
+        
+        // Reporte de Servicios
+        document.getElementById('form-servicios').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            const container = document.getElementById('resultado-servicios');
+            
+            container.innerHTML = '<div class="loading-state">⏳ Cargando datos...</div>';
+            
+            try {
+                const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_servicios&${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporteServicios(data.datos);
+                } else {
+                    container.innerHTML = '<div class="error-state">❌ Error: ' + (data.mensaje || 'No se pudieron cargar los datos') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<div class="error-state">❌ Error al cargar los datos. Por favor, intenta nuevamente.</div>';
+            }
+        });
         
         // Reporte por Conductor
         document.getElementById('form-conductor').addEventListener('submit', async function(e) {
@@ -733,6 +885,76 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 html += `<td>${row.destino}</td>`;
                 html += `<td><strong>${parseFloat(row.kilometros_recorridos || 0).toFixed(1)}</strong></td>`;
                 html += `<td><span class="badge badge-${row.tipo_servicio.toLowerCase()}">${row.tipo_servicio}</span></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Mostrar reporte de gastos
+        function mostrarReporteGastos(datos) {
+            const container = document.getElementById('resultado-gastos');
+            
+            if (!datos || datos.length === 0) {
+                container.innerHTML = '<div class="empty-result">No hay datos para mostrar</div>';
+                return;
+            }
+            
+            let html = '<table class="report-table"><thead><tr>';
+            html += '<th>Conductor</th>';
+            html += '<th>Placa</th>';
+            html += '<th>Vehículo</th>';
+            html += '<th>Fecha</th>';
+            html += '<th>Tipo</th>';
+            html += '<th>Descripción</th>';
+            html += '<th>Monto</th>';
+            html += '</tr></thead><tbody>';
+            
+            datos.forEach(row => {
+                html += '<tr>';
+                html += `<td><strong>${row.conductor}</strong></td>`;
+                html += `<td>${row.placa}</td>`;
+                html += `<td>${row.vehiculo}</td>`;
+                html += `<td><small>${formatFechaHora(row.fecha_gasto)}</small></td>`;
+                html += `<td><span class="badge badge-info">${row.tipo_gasto}</span></td>`;
+                html += `<td>${row.descripcion || 'N/A'}</td>`;
+                html += `<td><strong>$${parseFloat(row.monto || 0).toFixed(2)}</strong></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Mostrar reporte de servicios
+        function mostrarReporteServicios(datos) {
+            const container = document.getElementById('resultado-servicios');
+            
+            if (!datos || datos.length === 0) {
+                container.innerHTML = '<div class="empty-result">No hay datos para mostrar</div>';
+                return;
+            }
+            
+            let html = '<table class="report-table"><thead><tr>';
+            html += '<th>Conductor</th>';
+            html += '<th>Placa</th>';
+            html += '<th>Vehículo</th>';
+            html += '<th>Fecha</th>';
+            html += '<th>Descripción (Trayecto)</th>';
+            html += '<th>Tiempo (Duración)</th>';
+            html += '<th>Km</th>';
+            html += '</tr></thead><tbody>';
+            
+            datos.forEach(row => {
+                html += '<tr>';
+                html += `<td><strong>${row.conductor}</strong></td>`;
+                html += `<td>${row.placa}</td>`;
+                html += `<td>${row.vehiculo}</td>`;
+                html += `<td><small>${formatFechaHora(row.fecha_servicio)}</small></td>`;
+                html += `<td>${row.descripcion}</td>`;
+                html += `<td><span class="badge badge-warning">${row.tiempo_formato || 'No registrado'}</span></td>`;
+                html += `<td>${parseFloat(row.kilometros_recorridos || 0).toFixed(1)} km</td>`;
                 html += '</tr>';
             });
             

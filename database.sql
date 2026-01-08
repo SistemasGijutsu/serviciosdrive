@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS servicios (
     origen VARCHAR(255) NOT NULL,
     destino VARCHAR(255) NOT NULL,
     fecha_servicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    hora_inicio TIMESTAMP NULL COMMENT 'Hora de inicio del servicio',
+    hora_fin TIMESTAMP NULL COMMENT 'Hora de finalización del servicio',
     kilometros_recorridos DECIMAL(10,2) NOT NULL COMMENT 'Kilometraje real recorrido sin redondeos',
     tipo_servicio VARCHAR(100), -- Taxi, Uber, Cabify, etc.
     notas TEXT,
