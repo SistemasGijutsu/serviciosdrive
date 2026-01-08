@@ -164,6 +164,7 @@
                                     <span style="color: #3b82f6;">📅</span> Fecha/Hora del Servicio <span style="color: #ef4444;">*</span>
                                 </label>
                                 <input type="datetime-local" id="fecha_servicio" name="fecha_servicio" required style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;">
+                                <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">Se establece automáticamente la fecha y hora actual</small>
                             </div>
 
                             <div class="form-group" style="margin-bottom: 0;">
@@ -245,6 +246,7 @@
                                 <span style="color: #3b82f6;">📅</span> Fecha/Hora del Servicio <span style="color: #ef4444;">*</span>
                             </label>
                             <input type="datetime-local" id="fecha_servicio" name="fecha_servicio" required style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;">
+                            <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">Se establece automáticamente la fecha y hora actual</small>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 0;">
@@ -284,6 +286,17 @@
         // Toggle sidebar en móvil
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.getElementById('sidebar').classList.toggle('active');
+        });
+        
+        // Establecer fecha y hora actual automáticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaServicioInput = document.getElementById('fecha_servicio');
+            if (fechaServicioInput) {
+                const ahora = new Date();
+                // Ajustar a la zona horaria local
+                ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+                fechaServicioInput.value = ahora.toISOString().slice(0, 16);
+            }
         });
     </script>
 </body>

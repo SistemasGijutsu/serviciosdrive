@@ -42,6 +42,67 @@ if (!$esAdmin) {
     <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
     <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
     <meta name="theme-color" content="#2563eb">
+    <style>
+        .expense-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .expense-type-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .expense-type-card:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .expense-type-card.selected {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        
+        .expense-type-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .expense-type-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 16px;
+        }
+        
+        .amount-preview {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .amount-preview-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .amount-preview-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+    </style>
 </head>
 <body>
     <!-- Mensaje flotante -->
@@ -69,23 +130,46 @@ if (!$esAdmin) {
                 <span class="nav-icon">📊</span>
                 <span class="nav-text">Dashboard</span>
             </a>
-            <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
-                <span class="nav-icon">📝</span>
-                <span class="nav-text">Registrar Servicio</span>
-            </a>
-            <a href="<?= APP_URL ?>/public/registrar-gasto.php" class="nav-link active">
-                <span class="nav-icon">💰</span>
-                <span class="nav-text">Registrar Gasto</span>
-            </a>
-            <a href="<?= APP_URL ?>/public/historial.php" class="nav-link">
-                <span class="nav-icon">📋</span>
-                <span class="nav-text">Historial Servicios</span>
-            </a>
-            <a href="<?= APP_URL ?>/public/historial-gastos.php" class="nav-link">
-                <span class="nav-icon">📊</span>
-                <span class="nav-text">Historial Gastos</span>
-            </a>
-            <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
+            
+            <?php if (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2): ?>
+                <!-- Menú Administrador -->
+                <a href="<?= APP_URL ?>/public/admin/usuarios.php" class="nav-link">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Usuarios</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/admin/vehiculos.php" class="nav-link">
+                    <span class="nav-icon">🚗</span>
+                    <span class="nav-text">Vehículos</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/admin/servicios.php" class="nav-link">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Servicios</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/admin/reportes.php" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Reportes</span>
+                </a>
+            <?php else: ?>
+                <!-- Menú Conductor -->
+                <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
+                    <span class="nav-icon">📝</span>
+                    <span class="nav-text">Registrar Servicio</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/registrar-gasto.php" class="nav-link active">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-text">Registrar Gasto</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/historial.php" class="nav-link">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Historial Servicios</span>
+                </a>
+                <a href="<?= APP_URL ?>/public/historial-gastos.php" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Historial Gastos</span>
+                </a>
+            <?php endif; ?>
+            
+            <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-logout">
                 <span class="nav-icon">🚪</span>
                 <span class="nav-text">Cerrar Sesión</span>
             </a>
@@ -98,153 +182,300 @@ if (!$esAdmin) {
     
     <!-- Main Content -->
     <main class="main-content">
-        <div class="content-wrapper">
-            <div class="page-header">
-                <h1>💰 Registrar Gasto</h1>
-                <p>Registra tanqueos, arreglos, compras y otros gastos del vehículo</p>
+        <div class="page-header">
+            <h1>💰 Registrar Gasto del Vehículo</h1>
+            <p>Registra tanqueos, reparaciones, mantenimiento y otros gastos</p>
+        </div>
+        
+        <?php if (isset($mensajeError)): ?>
+            <div class="alert alert-warning" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                ⚠️ <?= htmlspecialchars($mensajeError) ?>
             </div>
+        <?php else: ?>
             
-            <?php if (isset($mensajeError)): ?>
-                <div class="alert alert-warning">
-                    ⚠️ <?= htmlspecialchars($mensajeError) ?>
+        <!-- Información del vehículo -->
+        <?php if ($sesionActiva): ?>
+        <div class="info-card" style="display: flex; gap: 30px; align-items: center; margin-bottom: 25px; padding: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 32px;">🚗</span>
+                <div>
+                    <small style="color: #666; font-size: 12px; display: block;">Vehículo</small>
+                    <strong style="font-size: 16px; color: #333;"><?= htmlspecialchars($vehiculoInfo) ?></strong>
                 </div>
-            <?php else: ?>
-                
-            <!-- Información del vehículo -->
-            <div class="info-card">
-                <div class="info-item">
-                    <span class="info-label">🚗 Vehículo:</span>
-                    <span class="info-value"><?= htmlspecialchars($vehiculoInfo) ?></span>
-                </div>
-                <?php if ($sesionActiva && isset($sesionActiva['fecha_inicio'])): ?>
-                <div class="info-item">
-                    <span class="info-label">🕐 Sesión iniciada:</span>
-                    <span class="info-value"><?= date('d/m/Y H:i', strtotime($sesionActiva['fecha_inicio'])) ?></span>
-                </div>
-                <?php endif; ?>
             </div>
-            
-            <!-- Formulario de Registro de Gasto -->
-            <div class="card">
+            <?php if (isset($sesionActiva['fecha_inicio'])): ?>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 32px;">🕐</span>
+                <div>
+                    <small style="color: #666; font-size: 12px; display: block;">Sesión iniciada</small>
+                    <strong style="font-size: 16px; color: #333;"><?= date('d/m/Y H:i', strtotime($sesionActiva['fecha_inicio'])) ?></strong>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+        
+        <!-- Formulario de Registro de Gasto -->
+        <div class="card" style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: none; overflow: hidden;">
+            <div class="card-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border: none;">
+                <h2 style="color: white; margin: 0; font-size: 24px; font-weight: 600; display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 28px;">💳</span> Información del Gasto
+                </h2>
+                <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Complete los datos del gasto realizado</p>
+            </div>
+            <div class="card-body" style="padding: 40px;">
                 <?php if (isset($_SESSION['error_mensaje'])): ?>
-                    <div class="alert alert-error" style="margin-bottom: 20px;">
+                    <div class="alert alert-error" style="background: #fee; border-left: 4px solid #ef4444; padding: 16px; border-radius: 8px; margin-bottom: 25px;">
                         ⚠️ <?= htmlspecialchars($_SESSION['error_mensaje']) ?>
                     </div>
                     <?php unset($_SESSION['error_mensaje']); ?>
                 <?php endif; ?>
                 
-                <form id="formRegistrarGasto" method="POST" action="<?= APP_URL ?>/public/api/gasto.php?action=crear" class="form-gasto">
-                    <div class="form-grid">
-                        <!-- Tipo de Gasto -->
-                        <div class="form-group">
-                            <label for="tipoGasto" class="form-label required">Tipo de Gasto</label>
-                            <select id="tipoGasto" name="tipo_gasto" class="form-control" required>
-                                <option value="">Seleccione...</option>
-                                <option value="tanqueo">⛽ Tanqueo</option>
-                                <option value="arreglo">🔧 Arreglo/Reparación</option>
-                                <option value="neumatico">🛞 Neumáticos (Espichadas/Cambio)</option>
-                                <option value="mantenimiento">🔧 Mantenimiento</option>
-                                <option value="compra">🛒 Compra (Accesorios/Repuestos)</option>
-                                <option value="otro">📦 Otro</option>
-                            </select>
+                <form id="formRegistrarGasto" method="POST" action="<?= APP_URL ?>/public/api/gasto.php?action=crear">
+                    <!-- Vista previa del monto -->
+                    <div class="amount-preview" id="amountPreview" style="display: none;">
+                        <div class="amount-preview-label">Monto Total del Gasto</div>
+                        <div class="amount-preview-value" id="amountPreviewValue">$0.00</div>
+                    </div>
+                    
+                    <!-- Tipo de Gasto - Cards visuales -->
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 16px; font-size: 15px;">
+                            <span style="color: #f59e0b;">🏷️</span> Tipo de Gasto <span style="color: #ef4444;">*</span>
+                        </label>
+                        
+                        <div class="expense-types-grid">
+                            <div class="expense-type-card" data-type="tanqueo">
+                                <div class="expense-type-icon">⛽</div>
+                                <div class="expense-type-name">Tanqueo</div>
+                            </div>
+                            <div class="expense-type-card" data-type="arreglo">
+                                <div class="expense-type-icon">🔧</div>
+                                <div class="expense-type-name">Reparación</div>
+                            </div>
+                            <div class="expense-type-card" data-type="neumatico">
+                                <div class="expense-type-icon">🛞</div>
+                                <div class="expense-type-name">Neumáticos</div>
+                            </div>
+                            <div class="expense-type-card" data-type="mantenimiento">
+                                <div class="expense-type-icon">🔩</div>
+                                <div class="expense-type-name">Mantenimiento</div>
+                            </div>
+                            <div class="expense-type-card" data-type="compra">
+                                <div class="expense-type-icon">🛒</div>
+                                <div class="expense-type-name">Compra</div>
+                            </div>
+                            <div class="expense-type-card" data-type="otro">
+                                <div class="expense-type-icon">📦</div>
+                                <div class="expense-type-name">Otro</div>
+                            </div>
                         </div>
                         
+                        <input type="hidden" id="tipoGasto" name="tipo_gasto" required>
+<!-- Grid de campos -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 28px;">
                         <!-- Monto -->
-                        <div class="form-group">
-                            <label for="monto" class="form-label required">Monto ($)</label>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="monto" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                                <span style="color: #10b981;">💵</span> Monto <span style="color: #ef4444;">*</span>
+                            </label>
                             <input 
                                 type="number" 
                                 id="monto" 
                                 name="monto" 
-                                class="form-control" 
                                 step="0.01" 
                                 min="0.01"
-                                placeholder="Ejemplo: 50.00"
+                                placeholder="Ejemplo: 50000"
                                 required
+                                style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;"
                             >
                         </div>
                         
                         <!-- Kilometraje Actual -->
-                        <div class="form-group">
-                            <label for="kilometrajeActual" class="form-label">Kilometraje Actual</label>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="kilometrajeActual" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                                <span style="color: #3b82f6;">🛣️</span> Kilometraje Actual
+                            </label>
                             <input 
                                 type="number" 
                                 id="kilometrajeActual" 
                                 name="kilometraje_actual" 
-                                class="form-control" 
                                 min="0"
                                 placeholder="Ejemplo: 45000"
+                                style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;"
                             >
-                            <small class="form-help">Opcional: Kilometraje del vehículo al momento del gasto</small>
-                        </div>
-                        
-                        <!-- Fecha del Gasto -->
-                        <div class="form-group">
-                            <label for="fechaGasto" class="form-label">Fecha del Gasto</label>
-                            <input 
-                                type="datetime-local" 
-                                id="fechaGasto" 
-                                name="fecha_gasto" 
-                                class="form-control"
-                            >
-                            <small class="form-help">Dejar vacío para usar fecha y hora actual</small>
+                            <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">Opcional: Kilometraje del vehículo</small>
                         </div>
                     </div>
                     
+                    <!-- Fecha del Gasto -->
+                    <div class="form-group" style="margin-bottom: 28px;">
+                        <label for="fechaGasto" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                            <span style="color: #8b5cf6;">📅</span> Fecha del Gasto
+                        </label>
+                        <input 
+                            type="datetime-local" 
+                            id="fechaGasto" 
+                            name="fecha_gasto"
+                            style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;"
+                        >
+                        <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">Se establece automáticamente la fecha y hora actual. Puedes modificarla si es necesario</small>
+                    </div>
+                    
                     <!-- Descripción -->
-                    <div class="form-group">
-                        <label for="descripcion" class="form-label required">Descripción del Gasto</label>
+                    <div class="form-group" style="margin-bottom: 28px;">
+                        <label for="descripcion" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                            <span style="color: #f59e0b;">📝</span> Descripción del Gasto <span style="color: #ef4444;">*</span>
+                        </label>
                         <textarea 
                             id="descripcion" 
                             name="descripcion" 
-                            class="form-control" 
                             rows="3" 
                             placeholder="Ejemplo: Tanqueada completa, 40 litros de gasolina extra"
                             required
+                            style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s; resize: vertical; font-family: inherit;"
                         ></textarea>
                     </div>
                     
                     <!-- Notas -->
-                    <div class="form-group">
-                        <label for="notas" class="form-label">Notas Adicionales</label>
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label for="notas" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                            <span style="color: #6366f1;">💬</span> Notas Adicionales
+                        </label>
                         <textarea 
                             id="notas" 
                             name="notas" 
-                            class="form-control" 
                             rows="2" 
                             placeholder="Observaciones adicionales (opcional)"
+                            style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s; resize: vertical; font-family: inherit;"
                         ></textarea>
                     </div>
                     
                     <!-- Botones -->
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <span>💾 Registrar Gasto</span>
+                    <div class="form-actions" style="display: flex; gap: 16px; padding-top: 24px; border-top: 2px solid #f1f5f9;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 18px 32px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="font-size: 20px;">💾</span> Registrar Gasto
                         </button>
-                        <a href="historial-gastos.php" class="btn btn-secondary">
-                            <span>📋 Ver Historial</span>
+                        <a href="historial-gastos.php" style="flex: 0.4; background: #f1f5f9; color: #64748b; padding: 18px 32px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="font-size: 18px;">📋</span> Ver Historial
                         </a>
                     </div>
                 </form>
             </div>
-            
-            <!-- Ayuda rápida -->
-            <div class="help-card">
-                <h3>💡 Tipos de gastos que puedes registrar:</h3>
-                <ul class="help-list">
-                    <li><strong>Tanqueo:</strong> Recargas de combustible</li>
-                    <li><strong>Arreglos:</strong> Reparaciones mecánicas, eléctricas, etc.</li>
-                    <li><strong>Neumáticos:</strong> Espichadas, cambios de neumáticos</li>
-                    <li><strong>Mantenimiento:</strong> Cambio de aceite, filtros, revisiones</li>
-                    <li><strong>Compras:</strong> Accesorios, repuestos, equipamiento</li>
-                    <li><strong>Otro:</strong> Cualquier otro gasto relacionado con el vehículo</li>
-                </ul>
-            </div>
-            
-            <?php endif; ?>
         </div>
+        
+        <!-- Ayuda rápida -->
+        <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 16px; padding: 30px; margin-top: 30px; color: white; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);">
+            <h3 style="margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 24px;">💡</span> Tipos de gastos que puedes registrar
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">⛽ Tanqueo</strong>
+                    <small style="opacity: 0.9;">Recargas de combustible</small>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">🔧 Reparación</strong>
+                    <small style="opacity: 0.9;">Arreglos mecánicos, eléctricos</small>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">🛞 Neumáticos</strong>
+                    <small style="opacity: 0.9;">Espichadas, cambios</small>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">🔩 Mantenimiento</strong>
+                    <small style="opacity: 0.9;">Aceite, filtros, revisiones</small>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">🛒 Compras</strong>
+                    <small style="opacity: 0.9;">Accesorios, repuestos</small>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">📦 Otro</strong>
+                    <small style="opacity: 0.9;">Cualquier otro gasto</small>
+                </div>
+            </div>
+        </div>
+        
+        <?php endif; ?>
     </main>
     
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
+    <script src="<?= APP_URL ?>/public/js/gasto.js"></script>
+    <script>
+        // Toggle sidebar en móvil
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+        
+        // Establecer fecha y hora actual automáticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaGastoInput = document.getElementById('fechaGasto');
+            if (fechaGastoInput) {
+                const ahora = new Date();
+                // Ajustar a la zona horaria local
+                ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+                fechaGastoInput.value = ahora.toISOString().slice(0, 16);
+            }
+        });
+        
+        // Selección visual de tipo de gasto
+        document.querySelectorAll('.expense-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remover selección de todos
+                document.querySelectorAll('.expense-type-card').forEach(c => c.classList.remove('selected'));
+                
+                // Seleccionar este
+                this.classList.add('selected');
+                
+                // Actualizar valor del input oculto
+                const tipo = this.dataset.type;
+                document.getElementById('tipoGasto').value = tipo;
+            });
+        });
+        
+        // Vista previa del monto
+        const montoInput = document.getElementById('monto');
+        const amountPreview = document.getElementById('amountPreview');
+        const amountPreviewValue = document.getElementById('amountPreviewValue');
+        
+        montoInput.addEventListener('input', function() {
+            const valor = parseFloat(this.value);
+            if (!isNaN(valor) && valor > 0) {
+                amountPreviewValue.textContent = new Intl.NumberFormat('es-CO', {
+                    style: 'currency',
+                    currency: 'COP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(valor);
+                amountPreview.style.display = 'block';
+            } else {
+                amountPreview.style.display = 'none';
+            }
+        });
+        
+        // Validación del formulario
+        document.getElementById('formRegistrarGasto').addEventListener('submit', function(e) {
+            const tipoGasto = document.getElementById('tipoGasto').value;
+            if (!tipoGasto) {
+                e.preventDefault();
+                mostrarMensaje('Por favor selecciona un tipo de gasto', 'error');
+                return false;
+            }
+        });
+        
+        // Animaciones al hacer hover en inputs
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            el.addEventListener('focus', function() {
+                this.style.borderColor = '#f59e0b';
+                this.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+            });
+            
+            el.addEventListener('blur', function() {
+                this.style.borderColor = '#e2e8f0';
+                this.style.boxShadow = 'none';
+            });
+        });
+    </script>
 </body>
 </html>

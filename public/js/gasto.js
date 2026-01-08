@@ -6,6 +6,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const formRegistrarGasto = document.getElementById('formRegistrarGasto');
     const btnLimpiar = document.getElementById('btnLimpiar');
     
+    // Establecer fecha y hora actual automáticamente
+    const fechaGastoInput = document.getElementById('fechaGasto');
+    if (fechaGastoInput) {
+        const ahora = new Date();
+        // Ajustar a la zona horaria local
+        ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+        fechaGastoInput.value = ahora.toISOString().slice(0, 16);
+    }
+    
     // Registrar nuevo gasto
     if (formRegistrarGasto) {
         formRegistrarGasto.addEventListener('submit', async function(e) {
