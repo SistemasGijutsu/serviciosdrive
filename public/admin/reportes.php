@@ -31,6 +31,12 @@ $estadisticasGastos = $gastoModel->obtenerEstadisticasGenerales();
 $estadisticasUsuarios = $usuarioModel->obtenerEstadisticas();
 $estadisticasVehiculos = $vehiculoModel->obtenerEstadisticas();
 $gastosPorTipo = $gastoModel->obtenerGastosPorTipo();
+
+// Obtener listas para filtros
+$conductores = array_filter($usuarioModel->obtenerTodos(), function($u) {
+    return $u['rol_id'] == 1 && $u['activo'] == 1;
+});
+$vehiculos = $vehiculoModel->obtenerTodosActivos();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -98,7 +104,28 @@ $gastosPorTipo = $gastoModel->obtenerGastosPorTipo();
             <p class="text-muted">Análisis completo del sistema</p>
         </div>
         
-        <!-- Estadísticas Principales -->
+        <!-- Pestañas de Reportes -->
+        <div class="reports-tabs">
+            <button class="tab-btn active" onclick="cambiarTab('resumen')">
+                <span class="tab-icon">📊</span> Resumen General
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('conductor')">
+                <span class="tab-icon">👨‍✈️</span> Por Conductor
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('vehiculo')">
+                <span class="tab-icon">🚗</span> Por Vehículo
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('fechas')">
+                <span class="tab-icon">📅</span> Por Fechas
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('trayectos')">
+                <span class="tab-icon">🗺️</span> Trayectos
+            </button>
+        </div>
+        
+        <!-- Tab: Resumen General -->
+        <div id="tab-resumen" class="tab-content active">
+            <h2 class="tab-title">📊 Resumen General</h2>
         <div class="stats-grid">
             <!-- Total Servicios -->
             <div class="stat-card stat-card-primary">
@@ -301,8 +328,392 @@ $gastosPorTipo = $gastoModel->obtenerGastosPorTipo();
                 </div>
             </div>
         </div>
+        <!-- Fin Tab: Resumen General -->
+        
+        <!-- Tab: Reporte por Conductor -->
+        <div id="tab-conductor" class="tab-content">
+            <h2 class="tab-title">👨‍✈️ Reporte por Conductor</h2>
+            
+            <div class="filters-card">
+                <form id="form-conductor" class="filters-form">
+                    <div class="filter-group">
+                        <label class="filter-label">Conductor</label>
+                        <select name="usuario_id" class="filter-select">
+                            <option value="">Todos los conductores</option>
+                            <?php foreach ($conductores as $conductor): ?>
+                                <option value="<?= $conductor['id'] ?>">
+                                    <?= htmlspecialchars($conductor['nombre'] . ' ' . $conductor['apellido']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" class="filter-input">
+                    </div>
+                    
+                    <button type="submit" class="btn-filter">
+                        <span>🔍</span> Generar Reporte
+                    </button>
+                </form>
+            </div>
+            
+            <div id="resultado-conductor" class="report-results"></div>
+        </div>
+        
+        <!-- Tab: Reporte por Vehículo -->
+        <div id="tab-vehiculo" class="tab-content">
+            <h2 class="tab-title">🚗 Reporte por Vehículo</h2>
+            
+            <div class="filters-card">
+                <form id="form-vehiculo" class="filters-form">
+                    <div class="filter-group">
+                        <label class="filter-label">Vehículo</label>
+                        <select name="vehiculo_id" class="filter-select">
+                            <option value="">Todos los vehículos</option>
+                            <?php foreach ($vehiculos as $vehiculo): ?>
+                                <option value="<?= $vehiculo['id'] ?>">
+                                    <?= htmlspecialchars($vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" class="filter-input">
+                    </div>
+                    
+                    <button type="submit" class="btn-filter">
+                        <span>🔍</span> Generar Reporte
+                    </button>
+                </form>
+            </div>
+            
+            <div id="resultado-vehiculo" class="report-results"></div>
+        </div>
+        
+        <!-- Tab: Reporte por Fechas -->
+        <div id="tab-fechas" class="tab-content">
+            <h2 class="tab-title">📅 Reporte por Fechas</h2>
+            
+            <div class="filters-card">
+                <form id="form-fechas" class="filters-form">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" class="filter-input" required>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" class="filter-input" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-filter">
+                        <span>🔍</span> Generar Reporte
+                    </button>
+                </form>
+            </div>
+            
+            <div id="resultado-fechas" class="report-results"></div>
+        </div>
+        
+        <!-- Tab: Trayectos Detallados -->
+        <div id="tab-trayectos" class="tab-content">
+            <h2 class="tab-title">🗺️ Reporte de Trayectos</h2>
+            
+            <div class="filters-card">
+                <form id="form-trayectos" class="filters-form">
+                    <div class="filter-group">
+                        <label class="filter-label">Conductor</label>
+                        <select name="usuario_id" class="filter-select">
+                            <option value="">Todos los conductores</option>
+                            <?php foreach ($conductores as $conductor): ?>
+                                <option value="<?= $conductor['id'] ?>">
+                                    <?= htmlspecialchars($conductor['nombre'] . ' ' . $conductor['apellido']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Vehículo</label>
+                        <select name="vehiculo_id" class="filter-select">
+                            <option value="">Todos los vehículos</option>
+                            <?php foreach ($vehiculos as $vehiculo): ?>
+                                <option value="<?= $vehiculo['id'] ?>">
+                                    <?= htmlspecialchars($vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" class="filter-input">
+                    </div>
+                    
+                    <button type="submit" class="btn-filter">
+                        <span>🔍</span> Generar Reporte
+                    </button>
+                </form>
+            </div>
+            
+            <div id="resultado-trayectos" class="report-results"></div>
+        </div>
     </main>
     
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
+    <script>
+        const APP_URL = '<?= APP_URL ?>';
+        
+        // Cambiar entre pestañas
+        function cambiarTab(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar pestaña seleccionada
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.closest('.tab-btn').classList.add('active');
+        }
+        
+        // Reporte por Conductor
+        document.getElementById('form-conductor').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            
+            try {
+                const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_conductor&${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporteConductor(data.datos);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // Reporte por Vehículo
+        document.getElementById('form-vehiculo').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            
+            try {
+                const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_vehiculo&${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporteVehiculo(data.datos);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // Reporte por Fechas
+        document.getElementById('form-fechas').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            
+            try {
+                const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_fechas&${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporteFechas(data.datos);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // Reporte de Trayectos
+        document.getElementById('form-trayectos').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            
+            try {
+                const response = await fetch(`${APP_URL}/public/api/reportes.php?action=reporte_trayectos&${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporteTrayectos(data.datos);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // Mostrar resultados por conductor
+        function mostrarReporteConductor(datos) {
+            const container = document.getElementById('resultado-conductor');
+            
+            if (!datos || datos.length === 0) {
+                container.innerHTML = '<div class="empty-result">No hay datos para mostrar</div>';
+                return;
+            }
+            
+            let html = '<table class="report-table"><thead><tr>';
+            html += '<th>Conductor</th>';
+            html += '<th>Servicios</th>';
+            html += '<th>Km Totales</th>';
+            html += '<th>Km Promedio</th>';
+            html += '<th>Período</th>';
+            html += '</tr></thead><tbody>';
+            
+            datos.forEach(row => {
+                html += '<tr>';
+                html += `<td><strong>${row.conductor}</strong></td>`;
+                html += `<td><span class="badge badge-info">${row.cantidad_servicios}</span></td>`;
+                html += `<td>${parseFloat(row.km_totales || 0).toFixed(1)} km</td>`;
+                html += `<td>${parseFloat(row.km_promedio || 0).toFixed(1)} km</td>`;
+                html += `<td><small>${formatFecha(row.primer_servicio)} - ${formatFecha(row.ultimo_servicio)}</small></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Mostrar resultados por vehículo
+        function mostrarReporteVehiculo(datos) {
+            const container = document.getElementById('resultado-vehiculo');
+            
+            if (!datos || datos.length === 0) {
+                container.innerHTML = '<div class="empty-result">No hay datos para mostrar</div>';
+                return;
+            }
+            
+            let html = '<table class="report-table"><thead><tr>';
+            html += '<th>Vehículo</th>';
+            html += '<th>Placa</th>';
+            html += '<th>Tipo</th>';
+            html += '<th>Servicios</th>';
+            html += '<th>Km Totales</th>';
+            html += '<th>Km Promedio</th>';
+            html += '</tr></thead><tbody>';
+            
+            datos.forEach(row => {
+                html += '<tr>';
+                html += `<td><strong>${row.vehiculo}</strong></td>`;
+                html += `<td>${row.placa}</td>`;
+                html += `<td>${row.tipo}</td>`;
+                html += `<td><span class="badge badge-info">${row.cantidad_servicios}</span></td>`;
+                html += `<td>${parseFloat(row.km_totales || 0).toFixed(1)} km</td>`;
+                html += `<td>${parseFloat(row.km_promedio || 0).toFixed(1)} km</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Mostrar resultados por fechas
+        function mostrarReporteFechas(datos) {
+            const container = document.getElementById('resultado-fechas');
+            
+            if (!datos || datos.length === 0) {
+                container.innerHTML = '<div class="empty-result">No hay datos para mostrar</div>';
+                return;
+            }
+            
+            let html = '<table class="report-table"><thead><tr>';
+            html += '<th>Fecha</th>';
+            html += '<th>Servicios</th>';
+            html += '<th>Km Totales</th>';
+            html += '<th>Km Promedio</th>';
+            html += '<th>Conductores</th>';
+            html += '<th>Vehículos</th>';
+            html += '</tr></thead><tbody>';
+            
+            datos.forEach(row => {
+                html += '<tr>';
+                html += `<td><strong>${formatFecha(row.fecha)}</strong></td>`;
+                html += `<td><span class="badge badge-primary">${row.cantidad_servicios}</span></td>`;
+                html += `<td>${parseFloat(row.km_totales || 0).toFixed(1)} km</td>`;
+                html += `<td>${parseFloat(row.km_promedio || 0).toFixed(1)} km</td>`;
+                html += `<td>${row.conductores_activos}</td>`;
+                html += `<td>${row.vehiculos_usados}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Mostrar trayectos
+        function mostrarReporteTrayectos(datos) {
+            const container = document.getElementById('resultado-trayectos');
+            
+            if (!datos || datos.length === 0) {
+                container.innerHTML = '<div class="empty-result">No hay datos para mostrar</div>';
+                return;
+            }
+            
+            let html = '<table class="report-table"><thead><tr>';
+            html += '<th>Fecha/Hora</th>';
+            html += '<th>Conductor</th>';
+            html += '<th>Vehículo</th>';
+            html += '<th>Origen</th>';
+            html += '<th>Destino</th>';
+            html += '<th>Km</th>';
+            html += '<th>Tipo</th>';
+            html += '</tr></thead><tbody>';
+            
+            datos.forEach(row => {
+                html += '<tr>';
+                html += `<td><small>${formatFechaHora(row.fecha_servicio)}</small></td>`;
+                html += `<td>${row.conductor}</td>`;
+                html += `<td>${row.vehiculo}<br><small class="text-muted">${row.placa}</small></td>`;
+                html += `<td>${row.origen}</td>`;
+                html += `<td>${row.destino}</td>`;
+                html += `<td><strong>${parseFloat(row.kilometros_recorridos || 0).toFixed(1)}</strong></td>`;
+                html += `<td><span class="badge badge-${row.tipo_servicio.toLowerCase()}">${row.tipo_servicio}</span></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Funciones auxiliares
+        function formatFecha(fecha) {
+            if (!fecha) return 'N/A';
+            const d = new Date(fecha);
+            return d.toLocaleDateString('es-ES');
+        }
+        
+        function formatFechaHora(fecha) {
+            if (!fecha) return 'N/A';
+            const d = new Date(fecha);
+            return d.toLocaleString('es-ES');
+        }
+    </script>
 </body>
 </html>

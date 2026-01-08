@@ -215,4 +215,238 @@ class Servicio {
             return [];
         }
     }
+    
+    /**
+     * Reporte por Conductor
+     */
+    public function obtenerReporteConductor($usuario_id = null, $fecha_desde = null, $fecha_hasta = null) {
+        try {
+            $query = "SELECT 
+                        u.id as usuario_id,
+                        CONCAT(u.nombre, ' ', u.apellido) as conductor,
+                        COUNT(s.id) as cantidad_servicios,
+                        SUM(s.kilometros_recorridos) as km_totales,
+                        AVG(s.kilometros_recorridos) as km_promedio,
+                        MIN(s.fecha_servicio) as primer_servicio,
+                        MAX(s.fecha_servicio) as ultimo_servicio
+                      FROM usuarios u
+                      LEFT JOIN {$this->table} s ON u.id = s.usuario_id";
+            
+            $conditions = ["u.rol_id = 1"]; // Solo conductores
+            
+            if ($usuario_id) {
+                $conditions[] = "u.id = :usuario_id";
+            }
+            if ($fecha_desde) {
+                $conditions[] = "DATE(s.fecha_servicio) >= :fecha_desde";
+            }
+            if ($fecha_hasta) {
+                $conditions[] = "DATE(s.fecha_servicio) <= :fecha_hasta";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " GROUP BY u.id, u.nombre, u.apellido
+                       HAVING cantidad_servicios > 0
+                       ORDER BY km_totales DESC";
+            
+            $stmt = $this->db->prepare($query);
+            
+            if ($usuario_id) {
+                $stmt->bindParam(':usuario_id', $usuario_id, PDO::PARAM_INT);
+            }
+            if ($fecha_desde) {
+                $stmt->bindParam(':fecha_desde', $fecha_desde);
+            }
+            if ($fecha_hasta) {
+                $stmt->bindParam(':fecha_hasta', $fecha_hasta);
+            }
+            
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error en reporte por conductor: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Reporte por Vehículo
+     */
+    public function obtenerReporteVehiculo($vehiculo_id = null, $fecha_desde = null, $fecha_hasta = null) {
+        try {
+            $query = "SELECT 
+                        v.id as vehiculo_id,
+                        v.placa,
+                        CONCAT(v.marca, ' ', v.modelo) as vehiculo,
+                        v.tipo,
+                        COUNT(s.id) as cantidad_servicios,
+                        SUM(s.kilometros_recorridos) as km_totales,
+                        AVG(s.kilometros_recorridos) as km_promedio,
+                        MIN(s.fecha_servicio) as primer_servicio,
+                        MAX(s.fecha_servicio) as ultimo_servicio
+                      FROM vehiculos v
+                      LEFT JOIN {$this->table} s ON v.id = s.vehiculo_id";
+            
+            $conditions = ["v.activo = 1"];
+            
+            if ($vehiculo_id) {
+                $conditions[] = "v.id = :vehiculo_id";
+            }
+            if ($fecha_desde) {
+                $conditions[] = "DATE(s.fecha_servicio) >= :fecha_desde";
+            }
+            if ($fecha_hasta) {
+                $conditions[] = "DATE(s.fecha_servicio) <= :fecha_hasta";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " GROUP BY v.id, v.placa, v.marca, v.modelo, v.tipo
+                       HAVING cantidad_servicios > 0
+                       ORDER BY km_totales DESC";
+            
+            $stmt = $this->db->prepare($query);
+            
+            if ($vehiculo_id) {
+                $stmt->bindParam(':vehiculo_id', $vehiculo_id, PDO::PARAM_INT);
+            }
+            if ($fecha_desde) {
+                $stmt->bindParam(':fecha_desde', $fecha_desde);
+            }
+            if ($fecha_hasta) {
+                $stmt->bindParam(':fecha_hasta', $fecha_hasta);
+            }
+            
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error en reporte por vehículo: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Reporte por Fechas
+     */
+    public function obtenerReporteFechas($fecha_desde = null, $fecha_hasta = null) {
+        try {
+            $query = "SELECT 
+                        DATE(fecha_servicio) as fecha,
+                        COUNT(*) as cantidad_servicios,
+                        SUM(kilometros_recorridos) as km_totales,
+                        AVG(kilometros_recorridos) as km_promedio,
+                        COUNT(DISTINCT usuario_id) as conductores_activos,
+                        COUNT(DISTINCT vehiculo_id) as vehiculos_usados
+                      FROM {$this->table}
+                      WHERE 1=1";
+            
+            if ($fecha_desde) {
+                $query .= " AND DATE(fecha_servicio) >= :fecha_desde";
+            }
+            if ($fecha_hasta) {
+                $query .= " AND DATE(fecha_servicio) <= :fecha_hasta";
+            }
+            
+            $query .= " GROUP BY DATE(fecha_servicio)
+                       ORDER BY fecha DESC";
+            
+            $stmt = $this->db->prepare($query);
+            
+            if ($fecha_desde) {
+                $stmt->bindParam(':fecha_desde', $fecha_desde);
+            }
+            if ($fecha_hasta) {
+                $stmt->bindParam(':fecha_hasta', $fecha_hasta);
+            }
+            
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error en reporte por fechas: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Reporte Detallado de Trayectos
+     */
+    public function obtenerReporteTrayectos($filtros = []) {
+        try {
+            $query = "SELECT 
+                        s.*,
+                        CONCAT(u.nombre, ' ', u.apellido) as conductor,
+                        CONCAT(v.marca, ' ', v.modelo) as vehiculo,
+                        v.placa
+                      FROM {$this->table} s
+                      INNER JOIN usuarios u ON s.usuario_id = u.id
+                      INNER JOIN vehiculos v ON s.vehiculo_id = v.id
+                      WHERE 1=1";
+            
+            if (!empty($filtros['usuario_id'])) {
+                $query .= " AND s.usuario_id = :usuario_id";
+            }
+            if (!empty($filtros['vehiculo_id'])) {
+                $query .= " AND s.vehiculo_id = :vehiculo_id";
+            }
+            if (!empty($filtros['fecha_desde'])) {
+                $query .= " AND DATE(s.fecha_servicio) >= :fecha_desde";
+            }
+            if (!empty($filtros['fecha_hasta'])) {
+                $query .= " AND DATE(s.fecha_servicio) <= :fecha_hasta";
+            }
+            
+            $query .= " ORDER BY s.fecha_servicio DESC LIMIT 100";
+            
+            $stmt = $this->db->prepare($query);
+            
+            if (!empty($filtros['usuario_id'])) {
+                $stmt->bindParam(':usuario_id', $filtros['usuario_id'], PDO::PARAM_INT);
+            }
+            if (!empty($filtros['vehiculo_id'])) {
+                $stmt->bindParam(':vehiculo_id', $filtros['vehiculo_id'], PDO::PARAM_INT);
+            }
+            if (!empty($filtros['fecha_desde'])) {
+                $stmt->bindParam(':fecha_desde', $filtros['fecha_desde']);
+            }
+            if (!empty($filtros['fecha_hasta'])) {
+                $stmt->bindParam(':fecha_hasta', $filtros['fecha_hasta']);
+            }
+            
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error en reporte de trayectos: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Reporte Comparativo
+     */
+    public function obtenerReporteComparativo() {
+        try {
+            $query = "SELECT 
+                        'vehiculo_mas_usado' as metrica,
+                        CONCAT(v.marca, ' ', v.modelo, ' (', v.placa, ')') as valor,
+                        COUNT(s.id) as cantidad
+                      FROM {$this->table} s
+                      INNER JOIN vehiculos v ON s.vehiculo_id = v.id
+                      GROUP BY s.vehiculo_id, v.marca, v.modelo, v.placa
+                      ORDER BY cantidad DESC
+                      LIMIT 1";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error en reporte comparativo: " . $e->getMessage());
+            return [];
+        }
+    }
 }
