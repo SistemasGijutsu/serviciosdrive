@@ -49,7 +49,11 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
     <title>Dashboard - Sistema de Control Vehicular</title>
     <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
     <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/icons/apple-touch-icon.svg">
     <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ServiciosDrive">
 </head>
 <body>
     <!-- Mensaje flotante -->
@@ -169,16 +173,43 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
             </a>
         </nav>
         
+        <!-- Botón para instalar la app -->
+        <div id="installAppContainer" class="install-app-container" style="display: none;">
+            <button id="installAppBtn" class="btn btn-install">
+                📱 Instalar App
+            </button>
+        </div>
+        
         <div class="sidebar-footer">
             <small>© 2025 ServiciosDrive</small>
         </div>
     </aside>
     
+    <!-- Banner de Instalación PWA -->
+    <div id="installBanner" class="install-banner" style="display: none;">
+        <div class="install-banner-content">
+            <div class="install-banner-icon">📱</div>
+            <div class="install-banner-text">
+                <strong>¡Instala ServiciosDrive!</strong>
+                <p>Descarga la app para un acceso más rápido y experiencia mejorada</p>
+            </div>
+            <div class="install-banner-actions">
+                <button id="installBannerBtn" class="btn btn-primary">Instalar</button>
+                <button id="closeBannerBtn" class="btn btn-secondary">Ahora no</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
         <div class="dashboard-header">
-            <h1>📊 Dashboard</h1>
-            <p class="text-muted"><?= $esAdmin ? 'Panel de Administración' : 'Bienvenido al sistema de control vehicular' ?></p>
+            <div>
+                <h1>📊 Dashboard</h1>
+                <p class="text-muted"><?= $esAdmin ? 'Panel de Administración' : 'Bienvenido al sistema de control vehicular' ?></p>
+            </div>
+            <button id="helpInstallBtn" class="btn-help-install" title="¿Cómo instalar la app?">
+                <span>❓</span> Instalar App
+            </button>
         </div>
         
         <?php if (!$esAdmin): ?>
@@ -394,6 +425,80 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
         </div>
     </div>
     <?php endif; ?>
+    
+    <!-- Modal de ayuda para instalación -->
+    <div id="installHelpModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>📱 Cómo Instalar ServiciosDrive</h3>
+                <button onclick="cerrarModalAyuda()" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="install-instructions">
+                    <div class="install-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>🔍 Busca el botón de instalación</h4>
+                            <p>Puedes encontrarlo en estos lugares:</p>
+                            <ul>
+                                <li>Banner en la parte superior de esta página</li>
+                                <li>Botón "📱 Instalar App" en el menú lateral izquierdo</li>
+                                <li>Ícono de instalación en la barra de direcciones de tu navegador</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="install-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>📱 En Móviles</h4>
+                            <div class="platform-instructions">
+                                <strong>Android (Chrome/Edge):</strong>
+                                <ul>
+                                    <li>Toca el menú (⋮) → "Instalar aplicación"</li>
+                                    <li>O toca el banner "Instalar" que aparece arriba</li>
+                                </ul>
+                                
+                                <strong>iPhone/iPad (Safari):</strong>
+                                <ul>
+                                    <li>Toca el botón Compartir (🔼)</li>
+                                    <li>Selecciona "Agregar a pantalla de inicio"</li>
+                                    <li>Toca "Agregar"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="install-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>💻 En Computadora</h4>
+                            <div class="platform-instructions">
+                                <strong>Chrome/Edge (Windows/Mac):</strong>
+                                <ul>
+                                    <li>Busca el ícono de instalación (➕) en la barra de direcciones</li>
+                                    <li>O ve al menú (⋮) → "Instalar ServiciosDrive"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="install-benefits">
+                        <h4>✨ Beneficios de instalar</h4>
+                        <div class="benefits-grid">
+                            <div class="benefit-item">🚀 Acceso más rápido</div>
+                            <div class="benefit-item">📱 Experiencia de app nativa</div>
+                            <div class="benefit-item">⚡ Carga más rápida</div>
+                            <div class="benefit-item">🔔 Notificaciones (próximamente)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="cerrarModalAyuda()" class="btn btn-primary">Entendido</button>
+            </div>
+        </div>
+    </div>
     
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
     <script src="<?= APP_URL ?>/public/js/servicio.js"></script>

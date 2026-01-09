@@ -13,37 +13,113 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Evento para instalar PWA
+// PWA - Manejo de instalación
 let deferredPrompt;
-const installPrompt = document.createElement('div');
-installPrompt.className = 'install-prompt';
-installPrompt.innerHTML = `
-    <p>¿Deseas instalar ServiciosDrive en tu dispositivo?</p>
-    <button class="btn btn-primary" id="btnInstalar">Instalar</button>
-    <button class="btn btn-secondary" id="btnCancelar">Ahora no</button>
-`;
+const installAppContainer = document.getElementById('installAppContainer');
+const installAppBtn = document.getElementById('installAppBtn');
+const installBanner = document.getElementById('installBanner');
+const installBannerBtn = document.getElementById('installBannerBtn');
+const closeBannerBtn = document.getElementById('closeBannerBtn');
 
+// Evento beforeinstallprompt - El navegador muestra que la app es instalable
 window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('beforeinstallprompt disparado');
     e.preventDefault();
     deferredPrompt = e;
     
-    document.body.appendChild(installPrompt);
-    installPrompt.classList.add('show');
+    // Mostrar el botón de instalación en el sidebar
+    if (installAppContainer) {
+        installAppContainer.style.display = 'block';
+    }
     
-    document.getElementById('btnInstalar').addEventListener('click', () => {
-        installPrompt.classList.remove('show');
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('Usuario aceptó instalar la PWA');
-            }
-            deferredPrompt = null;
-        });
-    });
+    // Mostrar el banner de instalación si no se ha cerrado antes
+    const bannerClosed = localStorage.getItem('installBannerClosed');
+    if (!bannerClosed && installBanner) {
+        setTimeout(() => {
+            installBanner.style.display = 'block';
+        }, 2000); // Mostrar después de 2 segundos
+    }
+});
+
+// Función para instalar la app
+async function instalarApp() {
+    if (!deferredPrompt) {
+        console.log('No hay evento de instalación disponible');
+        // Mostrar instrucciones manuales
+        mostrarInstruccionesInstalacion();
+        return;
+    }
     
-    document.getElementById('btnCancelar').addEventListener('click', () => {
-        installPrompt.classList.remove('show');
+    // Mostrar el prompt de instalación nativo
+    deferredPrompt.prompt();
+    
+    // Esperar la respuesta del usuario
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} instalar la app`);
+    
+    // Limpiar el prompt
+    deferredPrompt = null;
+    
+    // Ocultar el botón y banner
+    if (installAppContainer) {
+        installAppContainer.style.display = 'none';
+    }
+    if (installBanner) {
+        installBanner.style.display = 'none';
+    }
+    
+    if (outcome === 'accepted') {
+        mostrarMensaje('¡App instalada correctamente! 🎉', 'success');
+    }
+}
+
+// Click en el botón de instalación del sidebar
+if (installAppBtn) {
+    installAppBtn.addEventListener('click', instalarApp);
+}
+
+// Click en el botón de instalación del banner
+if (installBannerBtn) {
+    installBannerBtn.addEventListener('click', instalarApp);
+}
+
+// Click en cerrar el banner
+if (closeBannerBtn) {
+    closeBannerBtn.addEventListener('click', () => {
+        if (installBanner) {
+            installBanner.style.display = 'none';
+            // Guardar en localStorage que el usuario cerró el banner
+            localStorage.setItem('installBannerClosed', 'true');
+        }
     });
+}
+
+// Función para mostrar instrucciones de instalación
+function mostrarInstruccionesInstalacion() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    let mensaje = '';
+    
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+        mensaje = '📱 Para instalar en iOS:\n1. Toca el botón Compartir (🔼)\n2. Selecciona "Agregar a pantalla de inicio"';
+    } else if (/android/.test(userAgent)) {
+        mensaje = '📱 Para instalar en Android:\n1. Toca el menú (⋮)\n2. Selecciona "Instalar aplicación" o "Agregar a pantalla de inicio"';
+    } else {
+        mensaje = '💻 Para instalar en PC:\n1. Busca el ícono de instalación en la barra de direcciones\n2. O ve al menú del navegador > "Instalar ServiciosDrive"';
+    }
+    
+    alert(mensaje);
+}
+
+// Detectar cuando la app ya está instalada
+window.addEventListener('appinstalled', (e) => {
+    console.log('PWA instalada exitosamente');
+    deferredPrompt = null;
+    if (installAppContainer) {
+        installAppContainer.style.display = 'none';
+    }
+    if (installBanner) {
+        installBanner.style.display = 'none';
+    }
 });
 
 // Función para mostrar mensajes
@@ -109,7 +185,26 @@ function setButtonLoading(button, loading = true) {
         button.textContent = button.dataset.originalText || button.textContent;
     }
 }
+// Funciones para modal de ayuda de instalación
+function cerrarModalAyuda() {
+    const modal = document.getElementById('installHelpModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 
+function mostrarModalAyuda() {
+    const modal = document.getElementById('installHelpModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Botón de ayuda en el header
+const helpInstallBtn = document.getElementById('helpInstallBtn');
+if (helpInstallBtn) {
+    helpInstallBtn.addEventListener('click', mostrarModalAyuda);
+}
 // Detectar si está online/offline
 window.addEventListener('online', () => {
     mostrarMensaje('Conexión restaurada', 'success');
