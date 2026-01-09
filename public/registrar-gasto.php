@@ -105,6 +105,12 @@ if (!$esAdmin) {
     </style>
 </head>
 <body>
+    <!-- Botón menú hamburguesa para móvil -->
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <!-- Mensaje flotante -->
     <div id="mensaje" class="mensaje"></div>
     

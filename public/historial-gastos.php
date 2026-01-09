@@ -56,6 +56,12 @@ $etiquetasGasto = [
     <meta name="apple-mobile-web-app-title" content="ServiciosDrive">
 </head>
 <body>
+    <!-- Botón menú hamburguesa para móvil -->
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <?php if (isset($_SESSION['success_mensaje'])): ?>
         <div class="alert alert-success" style="position:fixed;top:20px;right:20px;z-index:9999;padding:15px;background:#10b981;color:white;border-radius:8px;">
             ✅ <?= htmlspecialchars($_SESSION['success_mensaje']) ?>

@@ -247,7 +247,48 @@ document.addEventListener('DOMContentLoaded', function() {
             reportesMenu.classList.toggle('show');
         });
     }
+    
+    // Toggle sidebar en móvil
+    initMobileMenu();
 });
+
+// Funcionalidad del menú móvil
+function initMobileMenu() {
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    if (menuToggle && sidebar) {
+        // Abrir/cerrar sidebar
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('sidebar-open');
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.toggle('show');
+            }
+        });
+        
+        // Cerrar sidebar al hacer clic en el overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('sidebar-open');
+                sidebarOverlay.classList.remove('show');
+            });
+        }
+        
+        // Cerrar sidebar al hacer clic en un enlace (en móvil)
+        if (window.innerWidth <= 768) {
+            const navLinks = sidebar.querySelectorAll('.nav-link:not(.nav-dropdown-toggle)');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    sidebar.classList.remove('sidebar-open');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('show');
+                    }
+                });
+            });
+        }
+    }
+}
 
 // Modal finalizar servicio
 function mostrarModalFinalizar() {

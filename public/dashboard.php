@@ -58,6 +58,13 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
 <body>
     <!-- Mensaje flotante -->
     <div id="mensaje" class="mensaje"></div>
+    
+    <!-- Botón menú hamburguesa para móvil -->
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <?php if (isset($_SESSION['mensaje'])): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
