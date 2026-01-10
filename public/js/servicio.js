@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
         formNuevo.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // VALIDAR TURNO ANTES DE ENVIAR
+            if (typeof gestorTurnos !== 'undefined' && !gestorTurnos.esTurnoActivo()) {
+                mostrarMensaje('⚠️ Debes seleccionar un turno antes de registrar un servicio', 'warning');
+                return;
+            }
+            
             const formData = new FormData(this);
             const btnSubmit = this.querySelector('button[type="submit"]');
             
@@ -26,7 +32,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.location.href = data.redirect;
                     }, 800);
                 } else {
-                    mostrarMensaje(data.message, 'error');
+                    // Manejar error de turno específicamente
+                    if (data.requiere_cambio_turno) {
+                        mostrarMensaje(data.message + ' Por favor, cambia tu turno.', 'warning');
+                        if (typeof gestorTurnos !== 'undefined') {
+                            gestorTurnos.mostrarModalCambiarTurno();
+                        }
+                    } else {
+                        mostrarMensaje(data.message, 'error');
+                    }
                     setButtonLoading(btnSubmit, false);
                 }
             } catch (error) {

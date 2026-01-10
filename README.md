@@ -23,9 +23,14 @@ Sistema web progresivo (PWA) para control vehicular desarrollado con arquitectur
 - 🔐 **Sistema de autenticación** - Login seguro con contraseñas hasheadas
 - � **Sistema de roles** - Conductor y Administrador (extensible)
 - 🚗 **Gestión de vehículos** - Asignación de vehículos a conductores
+- 🕐 **Sistema de turnos** - Gestión de horarios de trabajo (TRN1, TRN2, VARIOS)
 - 📝 **Registro de servicios** - Trayectos/rodamientos con origen y destino
+- 💰 **Gestión de gastos** - Registro de gastos con imágenes
 - 📊 **Historial completo** - Seguimiento de todos los servicios realizados
 - 📈 **Estadísticas** - Kilometraje total, costos, tiempo trabajado
+- ⚠️ **Incidencias/PQRs** - Sistema de reporte de incidencias
+- 🏷️ **Tipificaciones** - Clasificación de sesiones de trabajo
+- ⏱️ **Tiempos de espera** - Control de tiempos de espera en servicios
 - 📱 **PWA (Progressive Web App)** - Instalable en dispositivos móviles y escritorio
 - 🔄 **Sesiones de trabajo** - Control de jornadas laborales
 - 🎨 **Diseño responsive** - Adaptable a cualquier dispositivo

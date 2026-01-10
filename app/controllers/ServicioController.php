@@ -3,18 +3,21 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../models/Servicio.php';
 require_once __DIR__ . '/../models/SesionTrabajo.php';
 require_once __DIR__ . '/../models/Vehiculo.php';
+require_once __DIR__ . '/../models/Turno.php';
 require_once __DIR__ . '/AuthController.php';
 
 class ServicioController {
     private $servicioModel;
     private $sesionTrabajoModel;
     private $vehiculoModel;
+    private $turnoModel;
     private $authController;
     
     public function __construct() {
         $this->servicioModel = new Servicio();
         $this->sesionTrabajoModel = new SesionTrabajo();
         $this->vehiculoModel = new Vehiculo();
+        $this->turnoModel = new Turno(null); // Se inicializará con DB cuando se necesite
         $this->authController = new AuthController();
         
         // Verificar autenticación
@@ -46,6 +49,23 @@ class ServicioController {
     public function crear() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
+            return;
+        }
+        
+        // VALIDACIÓN DE TURNO: Verificar que el conductor tenga un turno activo y válido
+        require_once __DIR__ . '/../../config/Database.php';
+        $database = new Database();
+        $db = $database->getConnection();
+        $turnoModel = new Turno($db);
+        
+        $validacionTurno = $turnoModel->validarTurnoActivo($_SESSION['usuario_id']);
+        
+        if (!$validacionTurno['valido']) {
+            $this->responderJSON([
+                'success' => false, 
+                'message' => $validacionTurno['mensaje'],
+                'requiere_cambio_turno' => isset($validacionTurno['expirado']) && $validacionTurno['expirado']
+            ]);
             return;
         }
         

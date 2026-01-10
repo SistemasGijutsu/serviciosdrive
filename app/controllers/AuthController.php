@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Vehiculo.php';
 require_once __DIR__ . '/../models/SesionTrabajo.php';
+require_once __DIR__ . '/../models/Turno.php';
 
 class AuthController {
     private $usuarioModel;
@@ -89,7 +90,7 @@ class AuthController {
             return;
         }
         
-        // Paso 2: Asignar vehículo (NO crear sesión automáticamente)
+        // Paso 2: Asignar vehículo y devolver turnos disponibles
         if ($step === '2') {
             $vehiculo_id = $_POST['vehiculo_id'] ?? '';
             
@@ -113,21 +114,74 @@ class AuthController {
                 return;
             }
             
-            // Crear sesión de usuario (SIN crear sesión de trabajo)
+            // Guardar vehículo en datos temporales
+            $_SESSION['temp_vehiculo'] = [
+                'id' => $vehiculo_id,
+                'info' => $vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa']
+            ];
+            
+            // Obtener turnos disponibles
+            require_once __DIR__ . '/../../config/Database.php';
+            $database = Database::getInstance();
+            $db = $database->getConnection();
+            $turnoModel = new Turno($db);
+            $turnosDisponibles = $turnoModel->obtenerTurnosDisponibles();
+            
+            $this->responderJSON([
+                'success' => true,
+                'message' => 'Ahora selecciona tu turno',
+                'turnos' => $turnosDisponibles,
+                'vehiculo_info' => $_SESSION['temp_vehiculo']['info']
+            ]);
+            return;
+        }
+        
+        // Paso 3: Asignar turno y completar login
+        if ($step === '3') {
+            $turno_id = $_POST['turno_id'] ?? '';
+            
+            if (empty($turno_id)) {
+                $this->responderJSON(['success' => false, 'message' => 'Debe seleccionar un turno']);
+                return;
+            }
+            
+            // Verificar datos temporales
+            if (!isset($_SESSION['temp_usuario']) || !isset($_SESSION['temp_vehiculo'])) {
+                $this->responderJSON(['success' => false, 'message' => 'Sesión expirada. Intente nuevamente.']);
+                return;
+            }
+            
+            $datosUsuario = $_SESSION['temp_usuario'];
+            $vehiculo = $_SESSION['temp_vehiculo'];
+            
+            // Crear sesión de usuario
             $_SESSION['usuario_id'] = $datosUsuario['id'];
             $_SESSION['usuario'] = $datosUsuario['usuario'];
             $_SESSION['nombre_completo'] = $datosUsuario['nombre'] . ' ' . $datosUsuario['apellido'];
             $_SESSION['rol_id'] = $datosUsuario['rol_id'];
-            $_SESSION['vehiculo_id'] = $vehiculo_id;
-            $_SESSION['vehiculo_info'] = $vehiculo['marca'] . ' ' . $vehiculo['modelo'] . ' - ' . $vehiculo['placa'];
+            $_SESSION['vehiculo_id'] = $vehiculo['id'];
+            $_SESSION['vehiculo_info'] = $vehiculo['info'];
             $_SESSION['tiempo_login'] = time();
+            
+            // Iniciar turno
+            require_once __DIR__ . '/../../config/Database.php';
+            $database = Database::getInstance();
+            $db = $database->getConnection();
+            $turnoModel = new Turno($db);
+            $resultado = $turnoModel->iniciarTurno($datosUsuario['id'], $turno_id);
+            
+            if (!$resultado['success']) {
+                $this->responderJSON(['success' => false, 'message' => $resultado['message']]);
+                return;
+            }
             
             // Limpiar datos temporales
             unset($_SESSION['temp_usuario']);
+            unset($_SESSION['temp_vehiculo']);
             
             $this->responderJSON([
                 'success' => true,
-                'message' => '¡Bienvenido!',
+                'message' => '¡Bienvenido! Turno iniciado correctamente',
                 'redirect' => APP_URL . '/public/dashboard.php'
             ]);
         }

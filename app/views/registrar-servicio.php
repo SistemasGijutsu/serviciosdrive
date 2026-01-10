@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Servicio - Sistema de Control Vehicular</title>
-    <link rel="stylesheet" href="<?php echo APP_URL; ?>/public/css/styles.css">
-    <link rel="manifest" href="<?php echo APP_URL; ?>/manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="../manifest.json">
     <meta name="theme-color" content="#2563eb">
 </head>
 <body>
@@ -25,6 +25,11 @@
                 <small><?php echo isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2 ? '🔑 Administrador' : htmlspecialchars($_SESSION['vehiculo_info'] ?? 'Sin vehículo'); ?></small>
             </div>
         </div>
+        
+        <?php if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2): ?>
+        <!-- Contenedor para gestión de turnos (en sidebar para conductores) -->
+        <div id="turnoContainer" class="turno-container-sidebar"></div>
+        <?php endif; ?>
         
         <nav class="sidebar-nav">
             <a href="<?php echo APP_URL; ?>/public/dashboard.php" class="nav-link">
@@ -135,7 +140,7 @@
                     <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Complete los datos para iniciar el nuevo servicio</p>
                 </div>
                 <div class="card-body" style="padding: 40px;">
-                    <form id="formRegistrarServicio" method="POST" action="<?php echo APP_URL; ?>/public/registrar-servicio.php?action=crear">
+                    <form id="formRegistrarServicio" method="POST" action="registrar-servicio.php?action=crear">
                         <div class="form-row" style="margin-bottom: 28px;">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="tipo_servicio" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
@@ -217,7 +222,7 @@
                 <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Complete los datos del servicio realizado</p>
             </div>
             <div class="card-body" style="padding: 40px;">
-                <form id="formRegistrarServicio" method="POST" action="<?php echo APP_URL; ?>/public/registrar-servicio.php?action=crear">
+                <form id="formRegistrarServicio" method="POST" action="registrar-servicio.php?action=crear">
                     <div class="form-row" style="margin-bottom: 28px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="tipo_servicio" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
@@ -290,9 +295,13 @@
         </div>
     </main>
 
-    <script src="<?php echo APP_URL; ?>/public/js/app.js"></script>
-    <script src="<?php echo APP_URL; ?>/public/js/servicio.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/turnos.js"></script>
+    <script src="js/servicio.js"></script>
     <script>
+        // Pasar información del rol al JavaScript
+        document.body.dataset.esAdmin = '<?php echo (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2) ? "true" : "false"; ?>';
+        
         // Toggle sidebar en móvil
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.getElementById('sidebar').classList.toggle('active');
