@@ -19,7 +19,7 @@ class GestorTurnos {
 
     async verificarTurnoActivo() {
         try {
-            const response = await fetch('../api/turnos.php?action=turno_activo');
+            const response = await fetch(getApiUrl('api/turnos.php?action=turno_activo'));
             const data = await response.json();
             
             if (data.success && data.turno) {
@@ -39,7 +39,7 @@ class GestorTurnos {
 
     async obtenerTurnosDisponibles() {
         try {
-            const response = await fetch('../api/turnos.php?action=disponibles');
+            const response = await fetch(getApiUrl('api/turnos.php?action=disponibles'));
             const data = await response.json();
             
             if (data.success) {
@@ -157,7 +157,7 @@ class GestorTurnos {
 
     async seleccionarTurno(turnoId) {
         try {
-            const response = await fetch('../api/turnos.php?action=iniciar_turno', {
+            const response = await fetch(getApiUrl('api/turnos.php?action=iniciar_turno'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -247,7 +247,7 @@ class GestorTurnos {
         }
 
         try {
-            const response = await fetch('../api/turnos.php?action=cambiar_turno', {
+            const response = await fetch(getApiUrl('api/turnos.php?action=cambiar_turno'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -291,7 +291,7 @@ class GestorTurnos {
         }
 
         try {
-            const response = await fetch('../api/turnos.php?action=finalizar_turno', {
+            const response = await fetch(getApiUrl('api/turnos.php?action=finalizar_turno'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -329,7 +329,7 @@ class GestorTurnos {
         if (!this.turnoActivo) return;
 
         try {
-            const response = await fetch('../api/turnos.php?action=validar_turno');
+            const response = await fetch(getApiUrl('api/turnos.php?action=validar_turno'));
             const data = await response.json();
             
             if (!data.valido && data.expirado) {

@@ -18,7 +18,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-$database = new Database();
+$database = Database::getInstance();
 $db = $database->getConnection();
 $turnoModel = new Turno($db);
 $usuarioModel = new Usuario($db);

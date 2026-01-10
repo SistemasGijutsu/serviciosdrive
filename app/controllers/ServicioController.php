@@ -54,7 +54,7 @@ class ServicioController {
         
         // VALIDACIÓN DE TURNO: Verificar que el conductor tenga un turno activo y válido
         require_once __DIR__ . '/../../config/Database.php';
-        $database = new Database();
+        $database = Database::getInstance();
         $db = $database->getConnection();
         $turnoModel = new Turno($db);
         

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Servicio - Sistema de Control Vehicular</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/public/css/styles.css">
+    <link rel="manifest" href="<?php echo APP_URL; ?>/manifest.json">
     <meta name="theme-color" content="#2563eb">
 </head>
 <body>
@@ -295,9 +295,10 @@
         </div>
     </main>
 
-    <script src="js/app.js"></script>
-    <script src="js/turnos.js"></script>
-    <script src="js/servicio.js"></script>
+    <script src="<?php echo APP_URL; ?>/public/js/config.js"></script>
+    <script src="<?php echo APP_URL; ?>/public/js/app.js"></script>
+    <script src="<?php echo APP_URL; ?>/public/js/turnos.js"></script>
+    <script src="<?php echo APP_URL; ?>/public/js/servicio.js"></script>
     <script>
         // Pasar información del rol al JavaScript
         document.body.dataset.esAdmin = '<?php echo (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2) ? "true" : "false"; ?>';
