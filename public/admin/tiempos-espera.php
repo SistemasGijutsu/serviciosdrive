@@ -6,273 +6,209 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../app/controllers/AuthController.php';
 
-$authController = new AuthController();
-$authController->verificarAutenticacion();
+$auth = new AuthController();
+$auth->verificarAutenticacion();
 
-// Verificar que es administrador
-if ($_SESSION['rol_id'] != 2) {
-    $_SESSION['mensaje'] = 'No tienes permisos para acceder a esta página';
-    $_SESSION['tipo_mensaje'] = 'error';
+// Verificar que sea administrador
+if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
     header('Location: ' . APP_URL . '/public/dashboard.php');
     exit;
 }
-?>
 
+$nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiempos de Espera - Servicios Drive</title>
-    <link rel="stylesheet" href="<?php echo APP_URL; ?>/public/css/styles.css">
-    <style>
-        .filters-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .stat-card h3 {
-            margin: 0 0 10px 0;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .stat-card .subtitle {
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #ddd;
-        }
-        
-        .tab {
-            padding: 10px 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .tab.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .table-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        table th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
-        }
-        
-        table td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-success {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .badge-warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .badge-danger {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .badge-info {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        
-        .no-data {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        
-        .export-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-        
-        .export-btn:hover {
-            background: #218838;
-        }
-    </style>
+    <title>Tiempos de Espera - Admin</title>
+    <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
+    <meta name="theme-color" content="#2563eb">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📊 Tiempos de Espera entre Servicios</h1>
-            <p>Análisis de tiempos de espera de conductores entre servicios</p>
-            <a href="<?php echo APP_URL; ?>/public/dashboard.php" class="btn-back">← Volver al Dashboard</a>
-        </header>
-
-        <!-- Filtros -->
-        <div class="filters-section">
-            <h2>Filtros de Búsqueda</h2>
-            <div class="filter-grid">
-                <div class="form-group">
-                    <label for="filtro_conductor">Conductor:</label>
-                    <select id="filtro_conductor" class="form-control">
-                        <option value="">Todos los conductores</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="filtro_vehiculo">Vehículo:</label>
-                    <select id="filtro_vehiculo" class="form-control">
-                        <option value="">Todos los vehículos</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="filtro_fecha_desde">Desde:</label>
-                    <input type="date" id="filtro_fecha_desde" class="form-control">
-                </div>
-                
-                <div class="form-group">
-                    <label for="filtro_fecha_hasta">Hasta:</label>
-                    <input type="date" id="filtro_fecha_hasta" class="form-control">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🚗 Control Vehicular</h2>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <span>☰</span>
+            </button>
+        </div>
+        
+        <div class="sidebar-user">
+            <div class="user-avatar">👤</div>
+            <div class="user-info">
+                <strong><?= htmlspecialchars($nombreUsuario) ?></strong>
+                <small>🔑 Administrador</small>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="<?= APP_URL ?>/public/dashboard.php" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/usuarios.php" class="nav-link">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Usuarios</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/vehiculos.php" class="nav-link">
+                <span class="nav-icon">🚗</span>
+                <span class="nav-text">Vehículos</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/servicios.php" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Todos los Servicios</span>
+            </a>
+            
+            <!-- Dropdown de Reportes -->
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-toggle active open" id="reportesToggle">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reportes</span>
+                    <span class="nav-dropdown-arrow">▼</span>
+                </button>
+                <div class="nav-dropdown-menu show" id="reportesMenu">
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=resumen" class="nav-link">
+                        <span class="nav-text">📊 Resumen General</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=gastos" class="nav-link">
+                        <span class="nav-text">💰 Reporte de Gastos</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=servicios" class="nav-link">
+                        <span class="nav-text">📋 Reporte de Servicios</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=conductor" class="nav-link">
+                        <span class="nav-text">👤 Por Conductor</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=vehiculo" class="nav-link">
+                        <span class="nav-text">🚗 Por Vehículo</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=fechas" class="nav-link">
+                        <span class="nav-text">📅 Por Fechas</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=trayectos" class="nav-link">
+                        <span class="nav-text">🗺️ Trayectos</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/tiempos-espera.php" class="nav-link active">
+                        <span class="nav-text">⏱️ Tiempos de Espera</span>
+                    </a>
                 </div>
             </div>
             
-            <div style="display: flex; align-items: center;">
-                <label style="margin-right: 10px;">
-                    <input type="checkbox" id="solo_con_espera" checked>
-                    Mostrar solo servicios con tiempo de espera
-                </label>
-                <button onclick="aplicarFiltros()" class="btn btn-primary">Buscar</button>
-                <button onclick="limpiarFiltros()" class="btn" style="margin-left: 10px;">Limpiar</button>
+            <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-text">Incidencias/PQRs</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
+                <span class="nav-icon">🏷️</span>
+                <span class="nav-text">Tipificaciones</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
+                <span class="nav-icon">🚪</span>
+                <span class="nav-text">Cerrar Sesión</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <small>© 2025 ServiciosDrive</small>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="dashboard-header">
+            <h1>⏱️ Tiempos de Espera entre Servicios</h1>
+            <p class="text-muted">Análisis de tiempos de espera de conductores entre servicios</p>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card">
+            <div class="card-header">
+                <h2>🔍 Filtros de Búsqueda</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="filtro_conductor">CONDUCTOR:</label>
+                        <select id="filtro_conductor" class="form-control">
+                            <option value="">Todos los conductores</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filtro_vehiculo">VEHÍCULO:</label>
+                        <select id="filtro_vehiculo" class="form-control">
+                            <option value="">Todos los vehículos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filtro_fecha_desde">DESDE:</label>
+                        <input type="date" id="filtro_fecha_desde" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filtro_fecha_hasta">HASTA:</label>
+                        <input type="date" id="filtro_fecha_hasta" class="form-control">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; display: flex; align-items: center; gap: 15px;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="solo_con_espera" checked>
+                        <span>Mostrar solo servicios con tiempo de espera</span>
+                    </label>
+                    <button onclick="aplicarFiltros()" class="btn btn-primary">Buscar</button>
+                    <button onclick="limpiarFiltros()" class="btn btn-secondary">Limpiar</button>
+                </div>
             </div>
         </div>
 
         <!-- Estadísticas -->
-        <div class="stats-cards" id="stats-cards">
+        <div class="stats-grid" id="stats-cards" style="margin-top: 20px;">
             <!-- Se llenarán dinámicamente -->
         </div>
 
-        <!-- Pestañas -->
-        <div class="tabs">
-            <div class="tab active" onclick="cambiarTab('detalle')">Detalle de Servicios</div>
-            <div class="tab" onclick="cambiarTab('por-conductor')">Por Conductor</div>
+        <!-- Tabs -->
+        <div class="tabs-container" style="margin-top: 20px;">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="cambiarTab('detalle')">Detalle de Servicios</button>
+                <button class="tab-btn" onclick="cambiarTab('por-conductor')">Por Conductor</button>
+            </div>
         </div>
 
         <!-- Contenido: Detalle de servicios -->
         <div id="tab-detalle" class="tab-content active">
-            <div class="table-container">
-                <h2>Detalle de Tiempos de Espera
-                    <button onclick="exportarDetalle()" class="export-btn">📥 Exportar a CSV</button>
-                </h2>
-                <div id="tabla-detalle">
-                    <div class="loading">Cargando datos...</div>
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>📋 Detalle de Tiempos de Espera</h2>
+                    <button onclick="exportarDetalle()" class="btn btn-success">📥 Exportar CSV</button>
+                </div>
+                <div class="card-body">
+                    <div id="tabla-detalle" class="table-responsive">
+                        <div class="loading">Cargando datos...</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Contenido: Por conductor -->
-        <div id="tab-por-conductor" class="tab-content">
-            <div class="table-container">
-                <h2>Promedios por Conductor
-                    <button onclick="exportarPorConductor()" class="export-btn">📥 Exportar a CSV</button>
-                </h2>
-                <div id="tabla-por-conductor">
-                    <div class="loading">Cargando datos...</div>
+        <div id="tab-por-conductor" class="tab-content" style="display: none;">
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>👥 Promedios por Conductor</h2>
+                    <button onclick="exportarPorConductor()" class="btn btn-success">📥 Exportar CSV</button>
+                </div>
+                <div class="card-body">
+                    <div id="tabla-por-conductor" class="table-responsive">
+                        <div class="loading">Cargando datos...</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         let datosDetalle = [];
@@ -281,8 +217,7 @@ if ($_SESSION['rol_id'] != 2) {
         // Cargar conductores y vehículos para los filtros
         async function cargarFiltros() {
             try {
-                // Cargar conductores
-                const respConductores = await fetch('<?php echo APP_URL; ?>/public/api/reportes.php?action=obtener_conductores');
+                const respConductores = await fetch('<?= APP_URL ?>/public/api/reportes.php?action=obtener_conductores');
                 const conductores = await respConductores.json();
                 
                 const selectConductor = document.getElementById('filtro_conductor');
@@ -295,8 +230,7 @@ if ($_SESSION['rol_id'] != 2) {
                     });
                 }
                 
-                // Cargar vehículos
-                const respVehiculos = await fetch('<?php echo APP_URL; ?>/public/api/reportes.php?action=obtener_vehiculos');
+                const respVehiculos = await fetch('<?= APP_URL ?>/public/api/reportes.php?action=obtener_vehiculos');
                 const vehiculos = await respVehiculos.json();
                 
                 const selectVehiculo = document.getElementById('filtro_vehiculo');
@@ -315,12 +249,11 @@ if ($_SESSION['rol_id'] != 2) {
         
         // Cambiar entre pestañas
         function cambiarTab(tab) {
-            // Actualizar tabs
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
             
             event.target.classList.add('active');
-            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`tab-${tab}`).style.display = 'block';
         }
         
         // Aplicar filtros
@@ -354,36 +287,54 @@ if ($_SESSION['rol_id'] != 2) {
         async function cargarEstadisticas(filtros = {}) {
             try {
                 const params = new URLSearchParams({action: 'estadisticas_tiempos_espera', ...filtros});
-                const response = await fetch(`<?php echo APP_URL; ?>/public/api/reportes.php?${params}`);
+                const response = await fetch(`<?= APP_URL ?>/public/api/reportes.php?${params}`);
                 const data = await response.json();
                 
                 if (data.success && data.datos) {
                     const stats = data.datos;
                     const statsHtml = `
-                        <div class="stat-card">
-                            <h3>Total de Servicios</h3>
-                            <div class="value">${stats.total_servicios || 0}</div>
+                        <div class="stat-card stat-card-primary">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Total de Servicios</div>
+                                <div class="stat-value">${stats.total_servicios || 0}</div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Con Tiempo de Espera</h3>
-                            <div class="value">${stats.servicios_con_espera || 0}</div>
+                        <div class="stat-card stat-card-info">
+                            <div class="stat-icon">⏱️</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Con Tiempo de Espera</div>
+                                <div class="stat-value">${stats.servicios_con_espera || 0}</div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Promedio de Espera</h3>
-                            <div class="value">${formatearMinutos(stats.promedio_espera_minutos)}</div>
+                        <div class="stat-card stat-card-warning">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Promedio de Espera</div>
+                                <div class="stat-value">${formatearMinutos(stats.promedio_espera_minutos)}</div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Mínimo</h3>
-                            <div class="value">${formatearMinutos(stats.minimo_espera_minutos)}</div>
+                        <div class="stat-card stat-card-success">
+                            <div class="stat-icon">⬇️</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Mínimo</div>
+                                <div class="stat-value">${formatearMinutos(stats.minimo_espera_minutos)}</div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Máximo</h3>
-                            <div class="value">${formatearMinutos(stats.maximo_espera_minutos)}</div>
+                        <div class="stat-card stat-card-danger">
+                            <div class="stat-icon">⬆️</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Máximo</div>
+                                <div class="stat-value">${formatearMinutos(stats.maximo_espera_minutos)}</div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <h3>Total de Espera</h3>
-                            <div class="value">${formatearMinutos(stats.total_espera_minutos)}</div>
-                            <div class="subtitle">${Math.round((stats.total_espera_minutos || 0) / 60)} horas</div>
+                        <div class="stat-card stat-card-secondary">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Total de Espera</div>
+                                <div class="stat-value">${formatearMinutos(stats.total_espera_minutos)}</div>
+                                <div class="stat-sublabel">${Math.round((stats.total_espera_minutos || 0) / 60)} horas</div>
+                            </div>
                         </div>
                     `;
                     document.getElementById('stats-cards').innerHTML = statsHtml;
@@ -397,7 +348,7 @@ if ($_SESSION['rol_id'] != 2) {
         async function cargarDetalleEspera(filtros = {}) {
             try {
                 const params = new URLSearchParams({action: 'tiempos_espera', limite: 200, ...filtros});
-                const response = await fetch(`<?php echo APP_URL; ?>/public/api/reportes.php?${params}`);
+                const response = await fetch(`<?= APP_URL ?>/public/api/reportes.php?${params}`);
                 const data = await response.json();
                 
                 datosDetalle = data.datos || [];
@@ -408,7 +359,7 @@ if ($_SESSION['rol_id'] != 2) {
                 }
                 
                 let html = `
-                    <table>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Fecha/Hora</th>
@@ -427,7 +378,7 @@ if ($_SESSION['rol_id'] != 2) {
                         <tr>
                             <td>${formatearFecha(servicio.fecha_servicio)}</td>
                             <td>${servicio.conductor}</td>
-                            <td>${servicio.placa} - ${servicio.vehiculo}</td>
+                            <td><span class="badge badge-secondary">${servicio.placa}</span> ${servicio.vehiculo}</td>
                             <td>${servicio.trayecto}</td>
                             <td><span class="badge ${badgeClass}">${servicio.tiempo_espera_formato}</span></td>
                         </tr>
@@ -450,7 +401,7 @@ if ($_SESSION['rol_id'] != 2) {
         async function cargarReportePorConductor(filtros = {}) {
             try {
                 const params = new URLSearchParams({action: 'reporte_espera_por_conductor', ...filtros});
-                const response = await fetch(`<?php echo APP_URL; ?>/public/api/reportes.php?${params}`);
+                const response = await fetch(`<?= APP_URL ?>/public/api/reportes.php?${params}`);
                 const data = await response.json();
                 
                 datosPorConductor = data.datos || [];
@@ -461,7 +412,7 @@ if ($_SESSION['rol_id'] != 2) {
                 }
                 
                 let html = `
-                    <table>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Conductor</th>
@@ -576,6 +527,26 @@ if ($_SESSION['rol_id'] != 2) {
         window.onload = function() {
             cargarFiltros();
             aplicarFiltros();
+            
+            // Sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            sidebarToggle?.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            });
+            
+            // Dropdown toggle
+            const reportesToggle = document.getElementById('reportesToggle');
+            const reportesMenu = document.getElementById('reportesMenu');
+            
+            reportesToggle?.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.classList.toggle('open');
+                reportesMenu.classList.toggle('show');
+            });
         };
     </script>
 </body>
