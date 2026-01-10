@@ -18,11 +18,31 @@ class Servicio {
             $hora_inicio = $datos['fecha_servicio'] ?? date('Y-m-d H:i:s');
             // hora_fin: NULL - se llenará cuando finalice la sesión
             
+            // Calcular tiempo de espera desde el último servicio finalizado
+            $tiempo_espera_minutos = null;
+            $ultimoServicioFinalizado = $this->obtenerUltimoServicioFinalizado($datos['usuario_id']);
+            
+            if ($ultimoServicioFinalizado && !empty($ultimoServicioFinalizado['hora_fin'])) {
+                // Calcular diferencia en minutos entre hora_fin del anterior y hora_inicio del actual
+                $horaFinAnterior = new DateTime($ultimoServicioFinalizado['hora_fin']);
+                $horaInicioActual = new DateTime($hora_inicio);
+                $diferencia = $horaFinAnterior->diff($horaInicioActual);
+                
+                // Convertir a minutos totales
+                $tiempo_espera_minutos = ($diferencia->days * 24 * 60) + 
+                                        ($diferencia->h * 60) + 
+                                        $diferencia->i;
+                
+                error_log("Tiempo de espera calculado: $tiempo_espera_minutos minutos");
+            }
+            
             $query = "INSERT INTO {$this->table} 
                       (sesion_trabajo_id, usuario_id, vehiculo_id, origen, destino, 
-                       fecha_servicio, hora_inicio, hora_fin, kilometros_recorridos, tipo_servicio, notas) 
+                       fecha_servicio, hora_inicio, hora_fin, tiempo_espera_minutos, 
+                       kilometros_recorridos, tipo_servicio, notas) 
                       VALUES (:sesion_trabajo_id, :usuario_id, :vehiculo_id, :origen, :destino, 
-                              :fecha_servicio, :hora_inicio, NULL, :kilometros_recorridos, :tipo_servicio, :notas)";
+                              :fecha_servicio, :hora_inicio, NULL, :tiempo_espera_minutos,
+                              :kilometros_recorridos, :tipo_servicio, :notas)";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':sesion_trabajo_id', $datos['sesion_trabajo_id']);
@@ -32,6 +52,7 @@ class Servicio {
             $stmt->bindParam(':destino', $datos['destino']);
             $stmt->bindParam(':fecha_servicio', $datos['fecha_servicio']);
             $stmt->bindParam(':hora_inicio', $hora_inicio);
+            $stmt->bindParam(':tiempo_espera_minutos', $tiempo_espera_minutos, PDO::PARAM_INT);
             $stmt->bindParam(':kilometros_recorridos', $datos['kilometros_recorridos']);
             $stmt->bindParam(':tipo_servicio', $datos['tipo_servicio']);
             $stmt->bindParam(':notas', $datos['notas']);
@@ -106,6 +127,29 @@ class Servicio {
             return $stmt->fetch();
         } catch (PDOException $e) {
             error_log("Error al obtener último servicio: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Obtener el último servicio FINALIZADO de un usuario
+     * Se usa para calcular el tiempo de espera entre servicios
+     */
+    public function obtenerUltimoServicioFinalizado($usuario_id) {
+        try {
+            $query = "SELECT * FROM {$this->table}
+                      WHERE usuario_id = :usuario_id
+                      AND hora_fin IS NOT NULL
+                      ORDER BY hora_fin DESC
+                      LIMIT 1";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':usuario_id', $usuario_id, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener último servicio finalizado: " . $e->getMessage());
             return null;
         }
     }
@@ -619,5 +663,202 @@ class Servicio {
             return [];
         }
     }
+    
+    /**
+     * Obtener reporte de tiempos de espera entre servicios
+     * Muestra el tiempo que cada conductor espera entre finalizar un servicio e iniciar el siguiente
+     */
+    public function obtenerReporteTiemposEspera($filtros = []) {
+        try {
+            $query = "SELECT 
+                        s.id,
+                        s.fecha_servicio,
+                        s.hora_inicio,
+                        s.tiempo_espera_minutos,
+                        CASE 
+                            WHEN s.tiempo_espera_minutos IS NOT NULL 
+                            THEN CONCAT(
+                                FLOOR(s.tiempo_espera_minutos / 60), 'h ',
+                                MOD(s.tiempo_espera_minutos, 60), 'm'
+                            )
+                            ELSE 'Primer servicio'
+                        END as tiempo_espera_formato,
+                        CONCAT(s.origen, ' → ', s.destino) as trayecto,
+                        CONCAT(u.nombre, ' ', u.apellido) as conductor,
+                        u.id as usuario_id,
+                        v.placa,
+                        CONCAT(v.marca, ' ', v.modelo) as vehiculo
+                      FROM {$this->table} s
+                      INNER JOIN usuarios u ON s.usuario_id = u.id
+                      INNER JOIN vehiculos v ON s.vehiculo_id = v.id
+                      WHERE 1=1";
+            
+            // Agregar filtros opcionales
+            if (!empty($filtros['usuario_id'])) {
+                $query .= " AND s.usuario_id = :usuario_id";
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $query .= " AND s.vehiculo_id = :vehiculo_id";
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $query .= " AND DATE(s.fecha_servicio) >= :fecha_desde";
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $query .= " AND DATE(s.fecha_servicio) <= :fecha_hasta";
+            }
+            
+            // Mostrar solo los que tienen tiempo de espera registrado
+            if (isset($filtros['solo_con_espera']) && $filtros['solo_con_espera']) {
+                $query .= " AND s.tiempo_espera_minutos IS NOT NULL";
+            }
+            
+            $query .= " ORDER BY s.fecha_servicio DESC";
+            
+            // Límite
+            $limite = $filtros['limite'] ?? 100;
+            $query .= " LIMIT :limite";
+            
+            $stmt = $this->db->prepare($query);
+            
+            if (!empty($filtros['usuario_id'])) {
+                $stmt->bindValue(':usuario_id', $filtros['usuario_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $stmt->bindValue(':vehiculo_id', $filtros['vehiculo_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $stmt->bindValue(':fecha_desde', $filtros['fecha_desde'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $stmt->bindValue(':fecha_hasta', $filtros['fecha_hasta'], PDO::PARAM_STR);
+            }
+            
+            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+            
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener reporte de tiempos de espera: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Obtener estadísticas de tiempos de espera
+     */
+    public function obtenerEstadisticasTiemposEspera($filtros = []) {
+        try {
+            $query = "SELECT 
+                        COUNT(*) as total_servicios,
+                        COUNT(CASE WHEN tiempo_espera_minutos IS NOT NULL THEN 1 END) as servicios_con_espera,
+                        AVG(tiempo_espera_minutos) as promedio_espera_minutos,
+                        MIN(tiempo_espera_minutos) as minimo_espera_minutos,
+                        MAX(tiempo_espera_minutos) as maximo_espera_minutos,
+                        SUM(tiempo_espera_minutos) as total_espera_minutos
+                      FROM {$this->table}
+                      WHERE 1=1";
+            
+            if (!empty($filtros['usuario_id'])) {
+                $query .= " AND usuario_id = :usuario_id";
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $query .= " AND vehiculo_id = :vehiculo_id";
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $query .= " AND DATE(fecha_servicio) >= :fecha_desde";
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $query .= " AND DATE(fecha_servicio) <= :fecha_hasta";
+            }
+            
+            $stmt = $this->db->prepare($query);
+            
+            if (!empty($filtros['usuario_id'])) {
+                $stmt->bindValue(':usuario_id', $filtros['usuario_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['vehiculo_id'])) {
+                $stmt->bindValue(':vehiculo_id', $filtros['vehiculo_id'], PDO::PARAM_INT);
+            }
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $stmt->bindValue(':fecha_desde', $filtros['fecha_desde'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $stmt->bindValue(':fecha_hasta', $filtros['fecha_hasta'], PDO::PARAM_STR);
+            }
+            
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener estadísticas de tiempos de espera: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Obtener reporte agrupado por conductor con sus tiempos promedio de espera
+     */
+    public function obtenerReporteEsperaPorConductor($filtros = []) {
+        try {
+            $query = "SELECT 
+                        u.id as usuario_id,
+                        CONCAT(u.nombre, ' ', u.apellido) as conductor,
+                        COUNT(*) as total_servicios,
+                        COUNT(CASE WHEN s.tiempo_espera_minutos IS NOT NULL THEN 1 END) as servicios_con_espera,
+                        AVG(s.tiempo_espera_minutos) as promedio_espera_minutos,
+                        MIN(s.tiempo_espera_minutos) as minimo_espera_minutos,
+                        MAX(s.tiempo_espera_minutos) as maximo_espera_minutos,
+                        CONCAT(
+                            FLOOR(AVG(s.tiempo_espera_minutos) / 60), 'h ',
+                            ROUND(MOD(AVG(s.tiempo_espera_minutos), 60)), 'm'
+                        ) as promedio_formato
+                      FROM {$this->table} s
+                      INNER JOIN usuarios u ON s.usuario_id = u.id
+                      WHERE 1=1";
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $query .= " AND DATE(s.fecha_servicio) >= :fecha_desde";
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $query .= " AND DATE(s.fecha_servicio) <= :fecha_hasta";
+            }
+            
+            $query .= " GROUP BY u.id, u.nombre, u.apellido
+                       HAVING servicios_con_espera > 0
+                       ORDER BY promedio_espera_minutos DESC";
+            
+            $stmt = $this->db->prepare($query);
+            
+            if (!empty($filtros['fecha_desde'])) {
+                $stmt->bindValue(':fecha_desde', $filtros['fecha_desde'], PDO::PARAM_STR);
+            }
+            
+            if (!empty($filtros['fecha_hasta'])) {
+                $stmt->bindValue(':fecha_hasta', $filtros['fecha_hasta'], PDO::PARAM_STR);
+            }
+            
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener reporte de espera por conductor: " . $e->getMessage());
+            return [];
+        }
+    }
 }
+
 

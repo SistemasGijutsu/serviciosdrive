@@ -104,8 +104,45 @@ switch ($action) {
         echo json_encode(['success' => true, 'datos' => $vehiculos]);
         break;
         
+    case 'tiempos_espera':
+        $filtros = [
+            'usuario_id' => $_GET['usuario_id'] ?? null,
+            'vehiculo_id' => $_GET['vehiculo_id'] ?? null,
+            'fecha_desde' => $_GET['fecha_desde'] ?? null,
+            'fecha_hasta' => $_GET['fecha_hasta'] ?? null,
+            'solo_con_espera' => isset($_GET['solo_con_espera']) ? (bool)$_GET['solo_con_espera'] : false,
+            'limite' => $_GET['limite'] ?? 100
+        ];
+        
+        $datos = $servicioModel->obtenerReporteTiemposEspera($filtros);
+        echo json_encode(['success' => true, 'datos' => $datos]);
+        break;
+        
+    case 'estadisticas_tiempos_espera':
+        $filtros = [
+            'usuario_id' => $_GET['usuario_id'] ?? null,
+            'vehiculo_id' => $_GET['vehiculo_id'] ?? null,
+            'fecha_desde' => $_GET['fecha_desde'] ?? null,
+            'fecha_hasta' => $_GET['fecha_hasta'] ?? null
+        ];
+        
+        $datos = $servicioModel->obtenerEstadisticasTiemposEspera($filtros);
+        echo json_encode(['success' => true, 'datos' => $datos]);
+        break;
+        
+    case 'reporte_espera_por_conductor':
+        $filtros = [
+            'fecha_desde' => $_GET['fecha_desde'] ?? null,
+            'fecha_hasta' => $_GET['fecha_hasta'] ?? null
+        ];
+        
+        $datos = $servicioModel->obtenerReporteEsperaPorConductor($filtros);
+        echo json_encode(['success' => true, 'datos' => $datos]);
+        break;
+        
     default:
         echo json_encode(['success' => false, 'mensaje' => 'Acción no válida']);
         break;
 }
+
 

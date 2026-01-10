@@ -144,6 +144,9 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                         <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=trayectos" class="nav-link">
                             <span class="nav-text">🗺️ Trayectos</span>
                         </a>
+                        <a href="<?= APP_URL ?>/public/admin/tiempos-espera.php" class="nav-link">
+                            <span class="nav-text">⏱️ Tiempos de Espera</span>
+                        </a>
                     </div>
                 </div>
                 
