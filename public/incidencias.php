@@ -67,8 +67,14 @@ $esAdmin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2;
                 <a href="<?= APP_URL ?>/public/admin/reportes.php" class="nav-link">
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Reportes</span>
+                </a>                <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-text">Incidencias/PQRs</span>
                 </a>
-            <?php else: ?>
+                <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Tipificaciones</span>
+                </a>            <?php else: ?>
                 <!-- Menú Conductor -->
                 <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
                     <span class="nav-icon">📝</span>

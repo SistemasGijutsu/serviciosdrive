@@ -61,10 +61,6 @@ $servicios = $servicioModel->obtenerTodosServicios(200);
                 <span class="nav-icon">🚗</span>
                 <span class="nav-text">Vehículos</span>
             </a>
-            <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
-                <span class="nav-icon">🏷️</span>
-                <span class="nav-text">Tipificaciones</span>
-            </a>
             <a href="<?= APP_URL ?>/public/admin/servicios.php" class="nav-link active">
                 <span class="nav-icon">📋</span>
                 <span class="nav-text">Todos los Servicios</span>
@@ -105,6 +101,10 @@ $servicios = $servicioModel->obtenerTodosServicios(200);
             <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
                 <span class="nav-icon">⚠️</span>
                 <span class="nav-text">Incidencias/PQRs</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
+                <span class="nav-icon">🏷️</span>
+                <span class="nav-text">Tipificaciones</span>
             </a>
             <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
                 <span class="nav-icon">🚪</span>
