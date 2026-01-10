@@ -14,10 +14,10 @@ if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
     exit;
 }
 
-// Cargar usuarios
-require_once __DIR__ . '/../../app/models/Usuario.php';
-$usuarioModel = new Usuario();
-$usuarios = $usuarioModel->obtenerTodos();
+// Cargar tipificaciones
+require_once __DIR__ . '/../../app/models/TipificacionSesion.php';
+$tipificacionModel = new TipificacionSesion();
+$tipificaciones = $tipificacionModel->obtenerTodas();
 
 $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
 ?>
@@ -26,7 +26,7 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios - Admin</title>
+    <title>Gestión de Tipificaciones - Admin</title>
     <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
     <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
     <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/icons/apple-touch-icon.svg">
@@ -58,7 +58,7 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
                 <span class="nav-icon">📊</span>
                 <span class="nav-text">Dashboard</span>
             </a>
-            <a href="<?= APP_URL ?>/public/admin/usuarios.php" class="nav-link active">
+            <a href="<?= APP_URL ?>/public/admin/usuarios.php" class="nav-link">
                 <span class="nav-icon">👥</span>
                 <span class="nav-text">Usuarios</span>
             </a>
@@ -66,7 +66,7 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
                 <span class="nav-icon">🚗</span>
                 <span class="nav-text">Vehículos</span>
             </a>
-            <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
+            <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link active">
                 <span class="nav-icon">🏷️</span>
                 <span class="nav-text">Tipificaciones</span>
             </a>
@@ -126,56 +126,55 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
     <main class="main-content" id="mainContent">
         <div class="dashboard-header">
             <div>
-                <h1>👥 Gestión de Usuarios</h1>
-                <p class="text-muted">Administra los usuarios del sistema</p>
+                <h1>🏷️ Gestión de Tipificaciones</h1>
+                <p class="text-muted">Administra las tipificaciones de finalización de sesiones</p>
             </div>
-            <button class="btn btn-primary" onclick="location.href='<?= APP_URL ?>/public/admin/usuarios-form.php'">
-                ➕ Nuevo Usuario
+            <button class="btn btn-primary" onclick="location.href='<?= APP_URL ?>/public/admin/tipificaciones-form.php'">
+                ➕ Nueva Tipificación
             </button>
         </div>
         
-        <?php if (count($usuarios) > 0): ?>
+        <?php if (count($tipificaciones) > 0): ?>
             <div class="card">
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Usuario</th>
-                                <th>Nombre Completo</th>
-                                <th>Email</th>
-                                <th>Rol</th>
+                                <th>Color</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
                                 <th>Estado</th>
-                                <th>Último Acceso</th>
+                                <th>Fecha Creación</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($usuarios as $usuario): ?>
+                            <?php foreach ($tipificaciones as $tipificacion): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($usuario['id']) ?></td>
-                                    <td><strong><?= htmlspecialchars($usuario['usuario']) ?></strong></td>
-                                    <td><?= htmlspecialchars($usuario['nombre'] . ' ' . $usuario['apellido']) ?></td>
-                                    <td><?= htmlspecialchars($usuario['email'] ?? 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($tipificacion['id']) ?></td>
                                     <td>
-                                        <?php if ($usuario['rol_id'] == 2): ?>
-                                            <span class="badge badge-primary">🔑 <?= htmlspecialchars($usuario['rol']) ?></span>
-                                        <?php else: ?>
-                                            <span class="badge badge-secondary"><?= htmlspecialchars($usuario['rol']) ?></span>
-                                        <?php endif; ?>
+                                        <div style="width: 30px; height: 30px; background-color: <?= htmlspecialchars($tipificacion['color']) ?>; border-radius: 4px; border: 1px solid #ddd;"></div>
                                     </td>
+                                    <td><strong><?= htmlspecialchars($tipificacion['nombre']) ?></strong></td>
+                                    <td><?= htmlspecialchars($tipificacion['descripcion'] ?? '-') ?></td>
                                     <td>
-                                        <?php if ($usuario['activo']): ?>
-                                            <span class="badge badge-success">Activo</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-danger">Inactivo</span>
-                                        <?php endif; ?>
+                                        <span class="badge <?= $tipificacion['activo'] ? 'badge-success' : 'badge-danger' ?>">
+                                            <?= $tipificacion['activo'] ? '✓ Activo' : '✗ Inactivo' ?>
+                                        </span>
                                     </td>
-                                    <td>
-                                        <?= $usuario['ultimo_acceso'] ? date('d/m/Y H:i', strtotime($usuario['ultimo_acceso'])) : 'Nunca' ?>
-                                    </td>
-                                    <td>
-                                        <a href="<?= APP_URL ?>/public/admin/usuarios-form.php?id=<?= $usuario['id'] ?>" class="btn-icon" title="Editar">✏️</a>
+                                    <td><?= date('d/m/Y', strtotime($tipificacion['fecha_creacion'])) ?></td>
+                                    <td class="table-actions">
+                                        <button class="btn-icon btn-edit" 
+                                                onclick="location.href='<?= APP_URL ?>/public/admin/tipificaciones-form.php?id=<?= $tipificacion['id'] ?>'"
+                                                title="Editar">
+                                            ✏️
+                                        </button>
+                                        <button class="btn-icon btn-delete" 
+                                                onclick="eliminarTipificacion(<?= $tipificacion['id'] ?>, '<?= htmlspecialchars($tipificacion['nombre']) ?>')"
+                                                title="Eliminar">
+                                            🗑️
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -184,22 +183,41 @@ $nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
                 </div>
             </div>
         <?php else: ?>
-            <div class="dashboard-empty">
-                <div class="empty-icon">👥</div>
-                <h3>No hay usuarios registrados</h3>
-                <p>Comienza agregando el primer usuario</p>
-                <button class="btn btn-primary" onclick="location.href='<?= APP_URL ?>/public/admin/usuarios-form.php'">
-                    ➕ Agregar Usuario
-                </button>
+            <div class="card text-center">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏷️</div>
+                    <h3>No hay tipificaciones registradas</h3>
+                    <p>Comienza creando tu primera tipificación</p>
+                    <button class="btn btn-primary" onclick="location.href='<?= APP_URL ?>/public/admin/tipificaciones-form.php'">
+                        ➕ Nueva Tipificación
+                    </button>
+                </div>
             </div>
         <?php endif; ?>
     </main>
     
+    <script src="<?= APP_URL ?>/public/js/app.js"></script>
     <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('sidebar-collapsed');
-            document.getElementById('mainContent').classList.toggle('content-expanded');
-        });
+        function eliminarTipificacion(id, nombre) {
+            if (confirm(`¿Estás seguro de que deseas eliminar la tipificación "${nombre}"?\n\nSi hay sesiones usando esta tipificación, solo se desactivará.`)) {
+                fetch(`<?= APP_URL ?>/public/api/tipificaciones.php?id=${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Tipificación eliminada correctamente');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'No se pudo eliminar la tipificación'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar la tipificación');
+                });
+            }
+        }
     </script>
 </body>
 </html>

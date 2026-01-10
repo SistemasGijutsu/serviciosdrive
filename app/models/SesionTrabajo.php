@@ -41,9 +41,11 @@ class SesionTrabajo {
      */
     public function obtenerSesionActiva($usuario_id) {
         try {
-            $query = "SELECT st.*, v.placa, v.marca, v.modelo, v.tipo 
+            $query = "SELECT st.*, v.placa, v.marca, v.modelo, v.tipo,
+                      ts.nombre as tipificacion_nombre, ts.color as tipificacion_color
                       FROM {$this->table} st
                       INNER JOIN vehiculos v ON st.vehiculo_id = v.id
+                      LEFT JOIN tipificaciones_sesion ts ON st.id_tipificacion = ts.id
                       WHERE st.usuario_id = :usuario_id 
                       AND st.activa = 1 
                       AND st.fecha_fin IS NULL
@@ -65,7 +67,7 @@ class SesionTrabajo {
     /**
      * Finalizar sesión de trabajo
      */
-    public function finalizarSesion($sesion_id, $kilometraje_fin = null, $notas = null) {
+    public function finalizarSesion($sesion_id, $kilometraje_fin = null, $notas = null, $id_tipificacion = null) {
         try {
             // Validar que el kilometraje final sea mayor al inicial
             if ($kilometraje_fin !== null) {
@@ -87,6 +89,7 @@ class SesionTrabajo {
                       SET fecha_fin = CURRENT_TIMESTAMP, 
                           kilometraje_fin = :kilometraje_fin,
                           notas = :notas,
+                          id_tipificacion = :id_tipificacion,
                           activa = 0 
                       WHERE id = :sesion_id
                       AND activa = 1";
@@ -95,6 +98,7 @@ class SesionTrabajo {
             $stmt->bindParam(':sesion_id', $sesion_id);
             $stmt->bindParam(':kilometraje_fin', $kilometraje_fin);
             $stmt->bindParam(':notas', $notas);
+            $stmt->bindParam(':id_tipificacion', $id_tipificacion);
             
             return $stmt->execute() && $stmt->rowCount() > 0;
         } catch (PDOException $e) {
@@ -108,9 +112,11 @@ class SesionTrabajo {
      */
     public function obtenerPorId($sesion_id) {
         try {
-            $query = "SELECT st.*, v.placa, v.marca, v.modelo, v.tipo 
+            $query = "SELECT st.*, v.placa, v.marca, v.modelo, v.tipo,
+                      ts.nombre as tipificacion_nombre, ts.color as tipificacion_color
                       FROM {$this->table} st
                       INNER JOIN vehiculos v ON st.vehiculo_id = v.id
+                      LEFT JOIN tipificaciones_sesion ts ON st.id_tipificacion = ts.id
                       WHERE st.id = :sesion_id";
             
             $stmt = $this->db->prepare($query);

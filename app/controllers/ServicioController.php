@@ -129,7 +129,7 @@ class ServicioController {
         
         error_log("Usuario ID en sesión: " . ($_SESSION['usuario_id'] ?? 'NO DEFINIDO'));
         
-        // Obtener sesión activa del usuario (en lugar de confiar en $_SESSION)
+        // Obtener sesión activa del usuario
         $sesionActiva = $this->sesionTrabajoModel->obtenerSesionActiva($_SESSION['usuario_id']);
         
         if (!$sesionActiva) {
@@ -141,37 +141,41 @@ class ServicioController {
         }
         
         $sesion_id = $sesionActiva['id'];
-        $kilometraje_fin = $_POST['kilometraje_fin'] ?? null;
+        $kilometraje_fin = $_POST['kilometraje_fin'] ?? null; // Este viene del hidden input con el valor del último servicio
         $notas = $_POST['notas'] ?? '';
+        $id_tipificacion = $_POST['id_tipificacion'] ?? null;
         
         error_log("Sesión ID: $sesion_id");
-        error_log("Kilometraje fin: $kilometraje_fin");
+        error_log("Kilometraje fin (del último servicio): $kilometraje_fin");
         error_log("Kilometraje inicio: " . ($sesionActiva['kilometraje_inicio'] ?? 'NULL'));
+        error_log("Tipificación ID: " . ($id_tipificacion ?? 'NULL'));
         
-        // Validar kilometraje final
+        // Validar tipificación (ahora es el campo más importante)
+        if (empty($id_tipificacion) || !is_numeric($id_tipificacion)) {
+            error_log("Tipificación inválida o no seleccionada");
+            $_SESSION['mensaje'] = 'Debe seleccionar una tipificación para finalizar la sesión';
+            $_SESSION['tipo_mensaje'] = 'error';
+            header('Location: ' . APP_URL . '/public/dashboard.php');
+            exit;
+        }
+        
+        // El kilometraje ya viene del último servicio, solo verificar que exista
         if (empty($kilometraje_fin) || !is_numeric($kilometraje_fin)) {
-            error_log("Kilometraje final inválido");
-            $_SESSION['mensaje'] = 'El kilometraje final es obligatorio y debe ser un número válido';
-            $_SESSION['tipo_mensaje'] = 'error';
-            header('Location: ' . APP_URL . '/public/dashboard.php');
-            exit;
+            error_log("No se pudo obtener el kilometraje final del último servicio");
+            // Usar el kilometraje inicial como fallback
+            $kilometraje_fin = $sesionActiva['kilometraje_inicio'] ?? 0;
         }
         
-        // Validar que el kilometraje final sea mayor al inicial
-        if ($sesionActiva['kilometraje_inicio'] !== null && $kilometraje_fin < $sesionActiva['kilometraje_inicio']) {
-            error_log("Kilometraje final menor al inicial");
-            $_SESSION['mensaje'] = 'El kilometraje final no puede ser menor al inicial (' . $sesionActiva['kilometraje_inicio'] . ' km)';
-            $_SESSION['tipo_mensaje'] = 'error';
-            header('Location: ' . APP_URL . '/public/dashboard.php');
-            exit;
-        }
-        
-        // Finalizar sesión
-        error_log("Intentando finalizar sesión...");
-        if ($this->sesionTrabajoModel->finalizarSesion($sesion_id, $kilometraje_fin, $notas)) {
+        // Finalizar sesión con la tipificación
+        error_log("Intentando finalizar sesión con tipificación...");
+        if ($this->sesionTrabajoModel->finalizarSesion($sesion_id, $kilometraje_fin, $notas, $id_tipificacion)) {
             error_log("Sesión finalizada exitosamente");
+            
+            // Actualizar hora_fin de todos los servicios de esta sesión
+            error_log("Actualizando hora_fin de los servicios de la sesión...");
+            $this->servicioModel->finalizarServiciosSesion($sesion_id);
+            
             // Limpiar SOLO el ID de la sesión de trabajo
-            // Mantener vehiculo_id y vehiculo_info para que el conductor pueda iniciar una nueva sesión
             unset($_SESSION['sesion_trabajo_id']);
             
             $_SESSION['mensaje'] = 'Sesión finalizada correctamente. Puedes iniciar una nueva sesión cuando lo necesites.';

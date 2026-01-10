@@ -14,11 +14,15 @@ class Servicio {
      */
     public function crear($datos) {
         try {
+            // hora_inicio: usar la fecha_servicio (cuando comenzó el viaje)
+            $hora_inicio = $datos['fecha_servicio'] ?? date('Y-m-d H:i:s');
+            // hora_fin: NULL - se llenará cuando finalice la sesión
+            
             $query = "INSERT INTO {$this->table} 
                       (sesion_trabajo_id, usuario_id, vehiculo_id, origen, destino, 
-                       fecha_servicio, kilometros_recorridos, tipo_servicio, notas) 
+                       fecha_servicio, hora_inicio, hora_fin, kilometros_recorridos, tipo_servicio, notas) 
                       VALUES (:sesion_trabajo_id, :usuario_id, :vehiculo_id, :origen, :destino, 
-                              :fecha_servicio, :kilometros_recorridos, :tipo_servicio, :notas)";
+                              :fecha_servicio, :hora_inicio, NULL, :kilometros_recorridos, :tipo_servicio, :notas)";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':sesion_trabajo_id', $datos['sesion_trabajo_id']);
@@ -27,6 +31,7 @@ class Servicio {
             $stmt->bindParam(':origen', $datos['origen']);
             $stmt->bindParam(':destino', $datos['destino']);
             $stmt->bindParam(':fecha_servicio', $datos['fecha_servicio']);
+            $stmt->bindParam(':hora_inicio', $hora_inicio);
             $stmt->bindParam(':kilometros_recorridos', $datos['kilometros_recorridos']);
             $stmt->bindParam(':tipo_servicio', $datos['tipo_servicio']);
             $stmt->bindParam(':notas', $datos['notas']);
@@ -39,6 +44,69 @@ class Servicio {
         } catch (PDOException $e) {
             error_log("Error al crear servicio: " . $e->getMessage());
             return false;
+        }
+    }
+    
+    /**
+     * Finalizar un servicio específico (marcar hora_fin)
+     */
+    public function finalizarServicio($servicio_id) {
+        try {
+            $query = "UPDATE {$this->table} 
+                      SET hora_fin = CURRENT_TIMESTAMP 
+                      WHERE id = :servicio_id 
+                      AND hora_fin IS NULL";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':servicio_id', $servicio_id, PDO::PARAM_INT);
+            
+            return $stmt->execute() && $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Error al finalizar servicio: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Finalizar todos los servicios de una sesión (marcar hora_fin)
+     */
+    public function finalizarServiciosSesion($sesion_trabajo_id) {
+        try {
+            $query = "UPDATE {$this->table} 
+                      SET hora_fin = CURRENT_TIMESTAMP 
+                      WHERE sesion_trabajo_id = :sesion_trabajo_id 
+                      AND hora_fin IS NULL";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':sesion_trabajo_id', $sesion_trabajo_id, PDO::PARAM_INT);
+            
+            $result = $stmt->execute();
+            error_log("Servicios finalizados en sesión $sesion_trabajo_id: " . $stmt->rowCount());
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error al finalizar servicios de sesión: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Obtener el último servicio de una sesión
+     */
+    public function obtenerUltimoServicio($sesion_trabajo_id) {
+        try {
+            $query = "SELECT * FROM {$this->table}
+                      WHERE sesion_trabajo_id = :sesion_trabajo_id
+                      ORDER BY fecha_servicio DESC, id DESC
+                      LIMIT 1";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':sesion_trabajo_id', $sesion_trabajo_id, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al obtener último servicio: " . $e->getMessage());
+            return null;
         }
     }
     

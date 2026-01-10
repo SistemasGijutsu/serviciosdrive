@@ -151,6 +151,10 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
                     <span class="nav-icon">⚠️</span>
                     <span class="nav-text">Incidencias/PQRs</span>
                 </a>
+                <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Tipificaciones</span>
+                </a>
             <?php else: ?>
                 <!-- Menú Conductor -->
                 <a href="<?= APP_URL ?>/public/registrar-servicio.php" class="nav-link">
@@ -396,6 +400,17 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
     
     <!-- Modal Finalizar Sesión -->
     <?php if ($sesionActiva): ?>
+    <?php
+    // Cargar tipificaciones activas
+    require_once __DIR__ . '/../app/models/TipificacionSesion.php';
+    $tipificacionModel = new TipificacionSesion();
+    $tipificaciones = $tipificacionModel->obtenerTodas(true); // Solo activas
+    
+    // Obtener el último servicio para obtener el kilometraje final
+    $servicioModel = new Servicio();
+    $ultimoServicio = $servicioModel->obtenerUltimoServicio($sesionActiva['id']);
+    $kilometrajeFinal = $ultimoServicio ? $ultimoServicio['kilometros_recorridos'] : $sesionActiva['kilometraje_inicio'];
+    ?>
     <div id="modalFinalizar" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2 class="modal-title">
@@ -404,18 +419,44 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
             
             <form id="formFinalizarServicio" method="POST" action="<?= APP_URL ?>/public/registrar-servicio.php?action=finalizar">
                 <input type="hidden" name="sesion_id" value="<?= $sesionActiva['id'] ?>">
+                <input type="hidden" name="kilometraje_fin" value="<?= $kilometrajeFinal ?>">
                 
-                <div class="form-group">
-                    <label class="form-label">
-                        🛣️ Kilometraje Final *
-                    </label>
-                    <input type="number" name="kilometraje_fin" id="kilometraje_fin" required step="0.1" min="<?= $sesionActiva['kilometraje_inicio'] ?? 0 ?>" placeholder="Ej: 12450.5" class="form-input">
-                    <small class="form-hint">Kilometraje inicial: <?= $sesionActiva['kilometraje_inicio'] ?? 'N/A' ?></small>
+                <div class="form-group" style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <label class="form-label" style="margin: 0; font-weight: 600;">
+                                🛣️ Resumen de Kilometraje
+                            </label>
+                            <div style="display: flex; gap: 20px; margin-top: 8px; font-size: 14px;">
+                                <span>Inicial: <strong><?= number_format($sesionActiva['kilometraje_inicio'] ?? 0, 1) ?> km</strong></span>
+                                <span>→</span>
+                                <span>Final: <strong><?= number_format($kilometrajeFinal, 1) ?> km</strong></span>
+                                <span style="color: #28a745;">|</span>
+                                <span style="color: #28a745;">Recorrido: <strong><?= number_format($kilometrajeFinal - ($sesionActiva['kilometraje_inicio'] ?? 0), 1) ?> km</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="form-hint" style="margin-top: 8px; display: block;">El kilometraje final se toma del último servicio registrado</small>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">
-                         Notas Finales
+                        🏷️ Tipificación *
+                    </label>
+                    <select name="id_tipificacion" id="id_tipificacion" required class="form-input" style="font-size: 16px; padding: 12px;">
+                        <option value="">-- ¿Cómo finalizó la sesión? --</option>
+                        <?php foreach ($tipificaciones as $tip): ?>
+                            <option value="<?= $tip['id'] ?>" data-color="<?= htmlspecialchars($tip['color']) ?>">
+                                <?= htmlspecialchars($tip['nombre']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-hint">Este dato es importante para generar informes y reportes</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        📝 Notas Finales
                     </label>
                     <textarea name="notas" rows="3" placeholder="Observaciones, comentarios..." class="form-textarea"></textarea>
                 </div>
