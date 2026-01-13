@@ -287,6 +287,60 @@ class Turno {
     }
 
     /**
+     * Obtiene todos los turnos activos (para administradores)
+     * @return array Lista de turnos activos con información del conductor
+     */
+    public function obtenerTurnosActivos() {
+        try {
+            $query = "SELECT tc.*, 
+                      t.codigo, t.nombre, t.hora_inicio, t.hora_fin,
+                      u.usuario as conductor_usuario, u.nombre as conductor_nombre, u.apellido as conductor_apellido
+                      FROM {$this->table_turno_conductor} tc
+                      INNER JOIN {$this->table_turnos} t ON tc.turno_id = t.id
+                      INNER JOIN usuarios u ON tc.usuario_id = u.id
+                      WHERE tc.estado = 'activo'
+                      ORDER BY tc.fecha_inicio DESC";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener turnos activos: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Finaliza un turno específico por ID (para administradores)
+     * @param int $turnoConductorId ID del registro en turno_conductor
+     * @param string $observaciones Observaciones de la finalización
+     * @return array Resultado de la operación
+     */
+    public function finalizarTurnoPorId($turnoConductorId, $observaciones = null) {
+        try {
+            $query = "UPDATE {$this->table_turno_conductor} 
+                      SET fecha_fin = NOW(), 
+                          estado = 'finalizado',
+                          observaciones = :observaciones
+                      WHERE id = :id
+                      AND estado = 'activo'";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $turnoConductorId);
+            $stmt->bindParam(':observaciones', $observaciones);
+            
+            if ($stmt->execute() && $stmt->rowCount() > 0) {
+                return ['success' => true, 'message' => 'Turno finalizado correctamente'];
+            }
+            
+            return ['success' => false, 'message' => 'No se pudo finalizar el turno. Puede que ya esté finalizado.'];
+        } catch (PDOException $e) {
+            error_log("Error al finalizar turno por ID: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error al finalizar el turno'];
+        }
+    }
+
+    /**
      * Cambia el turno del conductor (finaliza el actual e inicia uno nuevo)
      */
     public function cambiarTurno($usuarioId, $nuevoTurnoId, $observaciones = null) {

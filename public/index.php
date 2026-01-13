@@ -15,6 +15,9 @@ switch ($action) {
     case 'login':
         $authController->procesarLogin();
         break;
+    case 'finalizar_turno_activo':
+        $authController->finalizarTurnoActivo();
+        break;
     case 'logout':
         $authController->logout();
         break;

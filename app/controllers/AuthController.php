@@ -154,6 +154,31 @@ class AuthController {
             $datosUsuario = $_SESSION['temp_usuario'];
             $vehiculo = $_SESSION['temp_vehiculo'];
             
+            // Verificar si ya tiene un turno activo
+            require_once __DIR__ . '/../../config/Database.php';
+            $database = Database::getInstance();
+            $db = $database->getConnection();
+            $turnoModel = new Turno($db);
+            
+            $turnoActivo = $turnoModel->obtenerTurnoActivo($datosUsuario['id']);
+            if ($turnoActivo) {
+                // Devolver información del turno activo para que el usuario pueda decidir
+                $this->responderJSON([
+                    'success' => false,
+                    'turno_activo' => true,
+                    'message' => 'Ya tienes un turno activo. Debes finalizarlo antes de iniciar uno nuevo.',
+                    'turno_info' => [
+                        'id' => $turnoActivo['id'],
+                        'codigo' => $turnoActivo['codigo'],
+                        'nombre' => $turnoActivo['nombre'],
+                        'fecha_inicio' => $turnoActivo['fecha_inicio'],
+                        'hora_inicio_turno' => $turnoActivo['hora_inicio'],
+                        'hora_fin_turno' => $turnoActivo['hora_fin']
+                    ]
+                ]);
+                return;
+            }
+            
             // Crear sesión de usuario
             $_SESSION['usuario_id'] = $datosUsuario['id'];
             $_SESSION['usuario'] = $datosUsuario['usuario'];
@@ -164,10 +189,6 @@ class AuthController {
             $_SESSION['tiempo_login'] = time();
             
             // Iniciar turno
-            require_once __DIR__ . '/../../config/Database.php';
-            $database = Database::getInstance();
-            $db = $database->getConnection();
-            $turnoModel = new Turno($db);
             $resultado = $turnoModel->iniciarTurno($datosUsuario['id'], $turno_id);
             
             if (!$resultado['success']) {
@@ -185,6 +206,33 @@ class AuthController {
                 'redirect' => APP_URL . '/public/dashboard.php'
             ]);
         }
+    }
+    
+    /**
+     * Finalizar turno activo desde el login
+     */
+    public function finalizarTurnoActivo() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
+            return;
+        }
+        
+        // Verificar datos temporales
+        if (!isset($_SESSION['temp_usuario'])) {
+            $this->responderJSON(['success' => false, 'message' => 'Sesión expirada. Intente nuevamente.']);
+            return;
+        }
+        
+        $datosUsuario = $_SESSION['temp_usuario'];
+        $observaciones = $_POST['observaciones'] ?? 'Turno finalizado desde login';
+        
+        require_once __DIR__ . '/../../config/Database.php';
+        $database = Database::getInstance();
+        $db = $database->getConnection();
+        $turnoModel = new Turno($db);
+        
+        $resultado = $turnoModel->finalizarTurno($datosUsuario['id'], $observaciones);
+        $this->responderJSON($resultado);
     }
     
     /**

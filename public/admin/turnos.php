@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
+if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
     header('Location: ../index.php');
     exit;
 }
@@ -234,6 +234,23 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
 
         <div id="mensaje" style="display: none;"></div>
 
+        <!-- Sección de Turnos Activos -->
+        <div style="margin-bottom: 40px;">
+            <h2 style="color: #333; margin-bottom: 15px;">📋 Turnos Activos de Conductores</h2>
+            <div id="turnosActivosContainer" style="
+                background: white;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            ">
+                <div id="turnosActivosLista">
+                    <!-- Los turnos activos se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Configuración de Turnos -->
+        <h2 style="color: #333; margin-bottom: 15px;">⚙️ Configuración de Turnos</h2>
         <div class="turnos-grid" id="turnosGrid">
             <!-- Los turnos se cargarán aquí -->
         </div>
@@ -291,7 +308,150 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
         // Cargar turnos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             cargarTurnos();
+            cargarTurnosActivos();
+            // Recargar turnos activos cada 30 segundos
+            setInterval(cargarTurnosActivos, 30000);
         });
+
+        async function cargarTurnosActivos() {
+            try {
+                const response = await fetch('../api/turnos.php?action=turnos_activos');
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarTurnosActivos(data.turnos_activos);
+                } else {
+                    console.error('Error al cargar turnos activos:', data.message);
+                }
+            } catch (error) {
+                console.error('Error al conectar con el servidor:', error);
+            }
+        }
+
+        function mostrarTurnosActivos(turnosActivos) {
+            const container = document.getElementById('turnosActivosLista');
+            
+            if (turnosActivos.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No hay turnos activos en este momento</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 12px; text-align: left;">Conductor</th>
+                            <th style="padding: 12px; text-align: left;">Turno</th>
+                            <th style="padding: 12px; text-align: left;">Horario</th>
+                            <th style="padding: 12px; text-align: left;">Inicio</th>
+                            <th style="padding: 12px; text-align: left;">Duración</th>
+                            <th style="padding: 12px; text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${turnosActivos.map(turno => {
+                            const horario = turno.hora_inicio && turno.hora_fin 
+                                ? `${formatearHora(turno.hora_inicio)} - ${formatearHora(turno.hora_fin)}`
+                                : 'Flexible (24h)';
+                            
+                            const fechaInicio = new Date(turno.fecha_inicio);
+                            const duracion = calcularDuracion(fechaInicio);
+                            const conductorNombre = `${turno.conductor_nombre} ${turno.conductor_apellido}`;
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 12px;">
+                                        <strong>${conductorNombre}</strong><br>
+                                        <small style="color: #666;">@${turno.conductor_usuario}</small>
+                                    </td>
+                                    <td style="padding: 12px;">
+                                        <span style="
+                                            background: #007bff;
+                                            color: white;
+                                            padding: 4px 8px;
+                                            border-radius: 4px;
+                                            font-size: 12px;
+                                            font-weight: bold;
+                                        ">${turno.codigo}</span><br>
+                                        <small>${turno.nombre}</small>
+                                    </td>
+                                    <td style="padding: 12px;">
+                                        <small style="color: #666;">${horario}</small>
+                                    </td>
+                                    <td style="padding: 12px;">
+                                        <small>${fechaInicio.toLocaleString('es-ES', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}</small>
+                                    </td>
+                                    <td style="padding: 12px;">
+                                        <span style="color: ${duracion.horas >= 8 ? '#dc3545' : '#28a745'}; font-weight: bold;">
+                                            ${duracion.texto}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <button 
+                                            class="btn btn-danger" 
+                                            style="padding: 6px 12px; font-size: 13px;"
+                                            onclick="finalizarTurnoActivo(${turno.id}, '${conductorNombre}', '${turno.codigo}')"
+                                        >
+                                            Finalizar Turno
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function calcularDuracion(fechaInicio) {
+            const ahora = new Date();
+            const diferencia = ahora - fechaInicio;
+            
+            const horas = Math.floor(diferencia / (1000 * 60 * 60));
+            const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+            
+            return {
+                horas: horas,
+                texto: `${horas}h ${minutos}m`
+            };
+        }
+
+        async function finalizarTurnoActivo(turnoConductorId, conductorNombre, codigoTurno) {
+            if (!confirm(`¿Estás seguro de finalizar el turno ${codigoTurno} de ${conductorNombre}?\\n\\nEsta acción cerrará el turno activo del conductor.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('../api/turnos.php?action=finalizar_turno_admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        turno_conductor_id: turnoConductorId,
+                        observaciones: 'Turno finalizado por administrador'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    mostrarMensaje('✓ ' + result.message, 'success');
+                    cargarTurnosActivos();
+                } else {
+                    mostrarMensaje('Error: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                mostrarMensaje('Error al finalizar el turno', 'danger');
+                console.error(error);
+            }
+        }
 
         async function cargarTurnos() {
             try {

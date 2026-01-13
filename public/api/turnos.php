@@ -30,7 +30,7 @@ try {
     switch ($action) {
         case 'listar':
             // Listar todos los turnos (para admin)
-            if ($_SESSION['rol'] !== 'admin') {
+            if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
                 exit;
@@ -64,7 +64,7 @@ try {
 
         case 'crear':
             // Crear nuevo turno (solo admin)
-            if ($_SESSION['rol'] !== 'admin') {
+            if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
                 exit;
@@ -102,7 +102,7 @@ try {
 
         case 'actualizar':
             // Actualizar turno existente (solo admin)
-            if ($_SESSION['rol'] !== 'admin') {
+            if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
                 exit;
@@ -139,7 +139,7 @@ try {
 
         case 'eliminar':
             // Eliminar turno (solo admin)
-            if ($_SESSION['rol'] !== 'admin') {
+            if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
                 exit;
@@ -168,7 +168,7 @@ try {
             $usuarioId = $_GET['usuario_id'] ?? $_SESSION['usuario_id'];
             
             // Solo admin puede ver turno de otros usuarios
-            if ($usuarioId != $_SESSION['usuario_id'] && $_SESSION['rol'] !== 'admin') {
+            if ($usuarioId != $_SESSION['usuario_id'] && (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2)) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
                 exit;
@@ -247,7 +247,7 @@ try {
             $usuarioId = $_GET['usuario_id'] ?? $_SESSION['usuario_id'];
             
             // Solo admin puede ver historial de otros usuarios
-            if ($usuarioId != $_SESSION['usuario_id'] && $_SESSION['rol'] !== 'admin') {
+            if ($usuarioId != $_SESSION['usuario_id'] && (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2)) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
                 exit;
@@ -256,6 +256,44 @@ try {
             $limite = isset($_GET['limite']) ? (int)$_GET['limite'] : 20;
             $historial = $turnoModel->obtenerHistorialConductor($usuarioId, $limite);
             echo json_encode(['success' => true, 'historial' => $historial]);
+            break;
+
+        case 'turnos_activos':
+            // Obtener todos los turnos activos (solo admin)
+            if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+                exit;
+            }
+
+            $turnosActivos = $turnoModel->obtenerTurnosActivos();
+            echo json_encode(['success' => true, 'turnos_activos' => $turnosActivos]);
+            break;
+
+        case 'finalizar_turno_admin':
+            // Finalizar turno de un conductor (solo admin)
+            if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+                exit;
+            }
+
+            if ($method !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+                exit;
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (empty($input['turno_conductor_id'])) {
+                echo json_encode(['success' => false, 'message' => 'ID de turno requerido']);
+                exit;
+            }
+
+            $observaciones = $input['observaciones'] ?? 'Turno finalizado por administrador';
+            $resultado = $turnoModel->finalizarTurnoPorId($input['turno_conductor_id'], $observaciones);
+            echo json_encode($resultado);
             break;
 
         default:

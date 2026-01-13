@@ -156,6 +156,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => {
                             window.location.href = data.redirect;
                         }, 500);
+                    } else if (data.turno_activo) {
+                        // Mostrar modal para cerrar turno activo
+                        mostrarModalTurnoActivo(data.turno_info);
+                        setButtonLoading(btnLogin, false);
                     } else {
                         mostrarMensaje(data.message, 'error');
                         setButtonLoading(btnLogin, false);
@@ -256,3 +260,143 @@ function mostrarSelectorTurnos(turnos, vehiculoInfo) {
     // Cambiar texto del botón
     document.getElementById('btnLogin').textContent = '✓ Iniciar Turno e Ingresar';
 }
+
+// Función para mostrar modal cuando hay turno activo
+function mostrarModalTurnoActivo(turnoInfo) {
+    // Crear modal si no existe
+    let modal = document.getElementById('modal-turno-activo');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-turno-activo';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    const fechaInicio = new Date(turnoInfo.fecha_inicio).toLocaleString('es-ES');
+    const horarioTurno = turnoInfo.hora_inicio_turno && turnoInfo.hora_fin_turno 
+        ? `${turnoInfo.hora_inicio_turno} - ${turnoInfo.hora_fin_turno}`
+        : 'Sin horario fijo (24h)';
+    
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        ">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="
+                    width: 70px;
+                    height: 70px;
+                    background: #ffc107;
+                    border-radius: 50%;
+                    margin: 0 auto 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 36px;
+                ">⚠️</div>
+                <h2 style="margin: 0; color: #333; font-size: 24px;">Ya tienes un turno activo</h2>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                    <strong style="color: #333;">Turno:</strong> ${turnoInfo.codigo} - ${turnoInfo.nombre}
+                </p>
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                    <strong style="color: #333;">Horario:</strong> ${horarioTurno}
+                </p>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    <strong style="color: #333;">Iniciado:</strong> ${fechaInicio}
+                </p>
+            </div>
+            
+            <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">
+                Debes finalizar tu turno activo antes de iniciar uno nuevo. 
+                ¿Deseas cerrarlo ahora?
+            </p>
+            
+            <div style="display: flex; gap: 12px;">
+                <button id="btn-cancelar-modal" style="
+                    flex: 1;
+                    padding: 12px 20px;
+                    background: #e0e0e0;
+                    color: #333;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 15px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background 0.3s;
+                ">Cancelar</button>
+                <button id="btn-cerrar-turno" style="
+                    flex: 1;
+                    padding: 12px 20px;
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 15px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background 0.3s;
+                ">Cerrar Turno</button>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+    
+    // Eventos
+    document.getElementById('btn-cancelar-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    document.getElementById('btn-cerrar-turno').addEventListener('click', async () => {
+        const btnCerrar = document.getElementById('btn-cerrar-turno');
+        btnCerrar.textContent = 'Cerrando...';
+        btnCerrar.disabled = true;
+        
+        try {
+            const formData = new URLSearchParams();
+            formData.append('observaciones', 'Turno cerrado desde login para iniciar nuevo turno');
+            
+            const response = await fetch('/serviciosdrive/public/index.php?action=finalizar_turno_activo', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                mostrarMensaje('✓ Turno cerrado correctamente. Ahora puedes seleccionar un nuevo turno.', 'success');
+                modal.remove();
+                // Reenviar el formulario para continuar con el proceso
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            } else {
+                mostrarMensaje(data.message || 'Error al cerrar el turno', 'error');
+                btnCerrar.textContent = 'Cerrar Turno';
+                btnCerrar.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarMensaje('Error al conectar con el servidor', 'error');
+            btnCerrar.textContent = 'Cerrar Turno';
+            btnCerrar.disabled = false;
+        }
+    });
+}
+
