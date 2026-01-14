@@ -258,13 +258,13 @@ class AuthController {
             exit;
         }
         
-        // Verificar timeout de sesión
-        if (isset($_SESSION['tiempo_login'])) {
-            $tiempoTranscurrido = time() - $_SESSION['tiempo_login'];
-            if ($tiempoTranscurrido > SESSION_LIFETIME) {
-                $this->logout();
-            }
-        }
+        // Verificación de timeout deshabilitada - sesión permanente
+        // if (isset($_SESSION['tiempo_login'])) {
+        //     $tiempoTranscurrido = time() - $_SESSION['tiempo_login'];
+        //     if ($tiempoTranscurrido > SESSION_LIFETIME) {
+        //         $this->logout();
+        //     }
+        // }
         
         return true;
     }

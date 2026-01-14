@@ -411,9 +411,9 @@ class GestorTurnos {
 let gestorTurnos = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Solo inicializar si es un conductor (no admin)
-    const esAdmin = document.body.dataset.esAdmin === 'true';
-    if (!esAdmin) {
+    // Inicializar si existe el contenedor de turno (solo para conductores)
+    const turnoContainer = document.getElementById('turnoContainer');
+    if (turnoContainer) {
         gestorTurnos = new GestorTurnos();
     }
 });
