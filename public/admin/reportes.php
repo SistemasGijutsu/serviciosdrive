@@ -123,6 +123,10 @@ $vehiculos = $vehiculoModel->obtenerTodosActivos();
                 <span class="nav-icon">🏷️</span>
                 <span class="nav-text">Tipificaciones</span>
             </a>
+            <a href="<?= APP_URL ?>/public/admin/turnos.php" class="nav-link">
+                <span class="nav-icon">🕐</span>
+                <span class="nav-text">Gestión de Turnos</span>
+            </a>
             <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
                 <span class="nav-icon">🚪</span>
                 <span class="nav-text">Cerrar Sesión</span>

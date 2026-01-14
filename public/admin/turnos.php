@@ -1,9 +1,20 @@
 <?php
-session_start();
-if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
-    header('Location: ../index.php');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../app/controllers/AuthController.php';
+
+$auth = new AuthController();
+$auth->verificarAutenticacion();
+
+// Verificar que sea administrador
+if (!isset($_SESSION['rol_id']) || $_SESSION['rol_id'] != 2) {
+    header('Location: ' . APP_URL . '/public/dashboard.php');
     exit;
 }
+
+$nombreUsuario = $_SESSION['nombre_completo'] ?? 'Usuario';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -11,7 +22,14 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Turnos - Admin</title>
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
+    <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/icons/apple-touch-icon.svg">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ServiciosDrive">
+    <meta name="apple-mobile-web-app-title" content="ServiciosDrive">
     <style>
         .turnos-grid {
             display: grid;
@@ -25,7 +43,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #007bff;
+            border-left: 4px solid #4CAF50;
         }
 
         .turno-card.inactivo {
@@ -42,7 +60,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
         }
 
         .turno-codigo {
-            background: #007bff;
+            background: #4CAF50;
             color: white;
             padding: 4px 12px;
             border-radius: 4px;
@@ -78,38 +96,16 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             margin-top: 15px;
         }
 
-        .btn {
+        .turno-actions .btn {
             padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
             font-size: 14px;
             flex: 1;
-            transition: background 0.3s;
-        }
-
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
         }
 
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 10001;
             left: 0;
             top: 0;
             width: 100%;
@@ -140,33 +136,6 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             color: #000;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -178,16 +147,9 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             cursor: pointer;
         }
 
-        .header-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
         .alert {
             padding: 15px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 20px;
         }
 
@@ -220,29 +182,143 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             background: #6c757d;
             color: white;
         }
+
+        .turnos-activos-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .turnos-activos-table thead tr {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .turnos-activos-table th,
+        .turnos-activos-table td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        .turnos-activos-table tbody tr {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .turnos-activos-table tbody tr:hover {
+            background: #f8f9fa;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header-actions">
-            <h1>Gestión de Turnos</h1>
-            <div>
-                <button class="btn btn-primary" onclick="mostrarFormularioNuevo()">+ Nuevo Turno</button>
-                <a href="reportes.php" class="btn" style="background: #6c757d; color: white; text-decoration: none; display: inline-block;">Volver</a>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🚗 Control Vehicular</h2>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <span>☰</span>
+            </button>
+        </div>
+        
+        <div class="sidebar-user">
+            <div class="user-avatar">👤</div>
+            <div class="user-info">
+                <strong><?= htmlspecialchars($nombreUsuario) ?></strong>
+                <small>🔑 Administrador</small>
             </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="<?= APP_URL ?>/public/dashboard.php" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/usuarios.php" class="nav-link">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Usuarios</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/vehiculos.php" class="nav-link">
+                <span class="nav-icon">🚗</span>
+                <span class="nav-text">Vehículos</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/servicios.php" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Todos los Servicios</span>
+            </a>
+            
+            <!-- Dropdown de Reportes -->
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-toggle" id="reportesToggle">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reportes</span>
+                    <span class="nav-dropdown-arrow">▼</span>
+                </button>
+                <div class="nav-dropdown-menu" id="reportesMenu">
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=resumen" class="nav-link">
+                        <span class="nav-text">📊 Resumen General</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=gastos" class="nav-link">
+                        <span class="nav-text">💰 Reporte de Gastos</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=servicios" class="nav-link">
+                        <span class="nav-text">📋 Reporte de Servicios</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=conductor" class="nav-link">
+                        <span class="nav-text">👤 Por Conductor</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=vehiculo" class="nav-link">
+                        <span class="nav-text">🚗 Por Vehículo</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=fechas" class="nav-link">
+                        <span class="nav-text">📅 Por Fechas</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/public/admin/reportes.php?tipo=trayectos" class="nav-link">
+                        <span class="nav-text">🗺️ Trayectos</span>
+                    </a>
+                </div>
+            </div>
+            
+            <a href="<?= APP_URL ?>/public/admin/incidencias.php" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-text">Incidencias/PQRs</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/tipificaciones.php" class="nav-link">
+                <span class="nav-icon">🏷️</span>
+                <span class="nav-text">Tipificaciones</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/admin/turnos.php" class="nav-link active">
+                <span class="nav-icon">🕐</span>
+                <span class="nav-text">Gestión de Turnos</span>
+            </a>
+            <a href="<?= APP_URL ?>/public/index.php?action=logout" class="nav-link nav-link-logout">
+                <span class="nav-icon">🚪</span>
+                <span class="nav-text">Cerrar Sesión</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <small>© 2025 ServiciosDrive</small>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="dashboard-header">
+            <div>
+                <h1>🕐 Gestión de Turnos</h1>
+                <p class="text-muted">Administra los turnos de trabajo del sistema</p>
+            </div>
+            <button class="btn btn-primary" onclick="mostrarFormularioNuevo()">
+                ➕ Nuevo Turno
+            </button>
         </div>
 
         <div id="mensaje" style="display: none;"></div>
 
         <!-- Sección de Turnos Activos -->
-        <div style="margin-bottom: 40px;">
-            <h2 style="color: #333; margin-bottom: 15px;">📋 Turnos Activos de Conductores</h2>
-            <div id="turnosActivosContainer" style="
-                background: white;
-                border-radius: 8px;
-                padding: 20px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            ">
+        <div class="card" style="margin-bottom: 30px;">
+            <div class="card-header">
+                <h3>📋 Turnos Activos de Conductores</h3>
+            </div>
+            <div class="card-body" id="turnosActivosContainer">
                 <div id="turnosActivosLista">
                     <!-- Los turnos activos se cargarán aquí -->
                 </div>
@@ -250,11 +326,17 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
         </div>
 
         <!-- Sección de Configuración de Turnos -->
-        <h2 style="color: #333; margin-bottom: 15px;">⚙️ Configuración de Turnos</h2>
-        <div class="turnos-grid" id="turnosGrid">
-            <!-- Los turnos se cargarán aquí -->
+        <div class="card">
+            <div class="card-header">
+                <h3>⚙️ Configuración de Turnos</h3>
+            </div>
+            <div class="card-body">
+                <div class="turnos-grid" id="turnosGrid">
+                    <!-- Los turnos se cargarán aquí -->
+                </div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <!-- Modal para crear/editar turno -->
     <div id="modalTurno" class="modal">
@@ -315,7 +397,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
 
         async function cargarTurnosActivos() {
             try {
-                const response = await fetch('../api/turnos.php?action=turnos_activos');
+                const response = await fetch('<?= APP_URL ?>/public/api/turnos.php?action=turnos_activos');
                 const data = await response.json();
                 
                 if (data.success) {
@@ -337,7 +419,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             }
 
             container.innerHTML = `
-                <table style="width: 100%; border-collapse: collapse;">
+                <table class="turnos-activos-table">
                     <thead>
                         <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                             <th style="padding: 12px; text-align: left;">Conductor</th>
@@ -428,7 +510,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             }
 
             try {
-                const response = await fetch('../api/turnos.php?action=finalizar_turno_admin', {
+                const response = await fetch('<?= APP_URL ?>/public/api/turnos.php?action=finalizar_turno_admin', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -455,7 +537,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
 
         async function cargarTurnos() {
             try {
-                const response = await fetch('../api/turnos.php?action=listar');
+                const response = await fetch('<?= APP_URL ?>/public/api/turnos.php?action=listar');
                 const data = await response.json();
                 
                 if (data.success) {
@@ -562,7 +644,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             const action = id ? 'actualizar' : 'crear';
 
             try {
-                const response = await fetch(`../api/turnos.php?action=${action}`, {
+                const response = await fetch(`<?= APP_URL ?>/public/api/turnos.php?action=${action}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -591,7 +673,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
             }
 
             try {
-                const response = await fetch(`../api/turnos.php?action=eliminar`, {
+                const response = await fetch(`<?= APP_URL ?>/public/api/turnos.php?action=eliminar`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -631,6 +713,38 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['rol_id']) || $_SESSION[
                 cerrarModal();
             }
         }
+
+        // ===== FUNCIONALIDAD DEL SIDEBAR =====
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mainContent = document.getElementById('mainContent');
+        const reportesToggle = document.getElementById('reportesToggle');
+        const reportesMenu = document.getElementById('reportesMenu');
+
+        // Toggle sidebar
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('sidebar-collapsed');
+                mainContent.classList.toggle('content-expanded');
+            });
+        }
+
+        // Toggle dropdown de reportes
+        if (reportesToggle) {
+            reportesToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                reportesToggle.classList.toggle('open');
+                reportesMenu.classList.toggle('show');
+            });
+        }
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (reportesToggle && !reportesToggle.contains(e.target) && !reportesMenu.contains(e.target)) {
+                reportesToggle.classList.remove('open');
+                reportesMenu.classList.remove('show');
+            }
+        });
     </script>
 </body>
 </html>
