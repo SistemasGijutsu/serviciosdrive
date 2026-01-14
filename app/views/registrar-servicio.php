@@ -239,20 +239,78 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+                    <!-- Campo de ciudad -->
+                    <div class="form-row" style="margin-bottom: 28px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="ciudad" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
+                                <span style="color: #3b82f6;">🏙️</span> Ciudad <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select id="ciudad" name="ciudad" required style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #f8fafc; transition: all 0.3s; cursor: pointer; font-weight: 500;">
+                                <option value="">Seleccione la ciudad...</option>
+                                <option value="Medellín, Antioquia, Colombia" selected>Medellín</option>
+                                <option value="Bogotá, Colombia">Bogotá</option>
+                                <option value="Cali, Valle del Cauca, Colombia">Cali</option>
+                                <option value="Barranquilla, Atlántico, Colombia">Barranquilla</option>
+                                <option value="Cartagena, Bolívar, Colombia">Cartagena</option>
+                                <option value="Bucaramanga, Santander, Colombia">Bucaramanga</option>
+                                <option value="Pereira, Risaralda, Colombia">Pereira</option>
+                                <option value="Manizales, Caldas, Colombia">Manizales</option>
+                                <option value="Santa Marta, Magdalena, Colombia">Santa Marta</option>
+                            </select>
+                            <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">💡 Selecciona la ciudad donde se realizó el servicio</small>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="origen" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
-                                <span style="color: #10b981;">📍</span> Punto de Origen <span style="color: #ef4444;">*</span>
+                                <span style="color: #10b981;">📍</span> Dirección de Origen <span style="color: #ef4444;">*</span>
                             </label>
-                            <input type="text" id="origen" name="origen" required placeholder="Ingrese la dirección de origen" style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;">
+                            <input type="text" id="origen" name="origen" required placeholder="Ej: Cra 58 # 73-05" style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;">
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button type="button" onclick="obtenerUbicacionActual('origen')" style="background: #f1f5f9; color: #475569; padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span>📍</span> Usar mi ubicación
+                                </button>
+                                <button type="button" onclick="limpiarCampo('origen')" style="background: #fef2f2; color: #dc2626; padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span>🗑️</span> Limpiar
+                                </button>
+                            </div>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="destino" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; margin-bottom: 12px; font-size: 15px;">
-                                <span style="color: #ef4444;">📍</span> Punto de Destino <span style="color: #ef4444;">*</span>
+                                <span style="color: #ef4444;">📍</span> Dirección de Destino <span style="color: #ef4444;">*</span>
                             </label>
-                            <input type="text" id="destino" name="destino" required placeholder="Ingrese la dirección de destino" style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;">
+                            <input type="text" id="destino" name="destino" required placeholder="Ej: Calle 10 # 20-30" style="width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.3s;">
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button type="button" onclick="obtenerUbicacionActual('destino')" style="background: #f1f5f9; color: #475569; padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span>📍</span> Usar mi ubicación
+                                </button>
+                                <button type="button" onclick="limpiarCampo('destino')" style="background: #fef2f2; color: #dc2626; padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span>🗑️</span> Limpiar
+                                </button>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Campos ocultos para coordenadas -->
+                    <input type="hidden" id="origen_coords" name="origen_coords">
+                    <input type="hidden" id="destino_coords" name="destino_coords">
+
+                    <!-- Botón para calcular distancia automática -->
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <button type="button" id="btnCalcularDistancia" class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); display: inline-flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 18px;">🗺️</span> Calcular Distancia Automáticamente
+                        </button>
+                    </div>
+
+                    <!-- Resultado del cálculo -->
+                    <div id="resultadoDistancia" style="display: none; margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <span style="font-size: 24px;">📊</span>
+                            <strong style="color: #1e40af; font-size: 16px;">Distancia Calculada:</strong>
+                        </div>
+                        <div id="infoDistancia" style="color: #1e3a8a; font-size: 15px; line-height: 1.6;"></div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
@@ -299,6 +357,7 @@
     <script src="<?php echo APP_URL; ?>/public/js/app.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/offline-manager.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/turnos.js"></script>
+    <script src="<?php echo APP_URL; ?>/public/js/distancematrix-util.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/servicio.js"></script>
     <script>
         // Pasar información del rol al JavaScript
@@ -317,6 +376,192 @@
                 // Ajustar a la zona horaria local
                 ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
                 fechaServicioInput.value = ahora.toISOString().slice(0, 16);
+            }
+
+            // ========== GEOLOCALIZACIÓN ==========
+            window.obtenerUbicacionActual = function(campo) {
+                if (!navigator.geolocation) {
+                    mostrarMensaje('❌ Tu navegador no soporta geolocalización', 'error');
+                    return;
+                }
+
+                mostrarMensaje('📍 Obteniendo tu ubicación...', 'info');
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const coords = `${lat},${lng}`;
+                        
+                        console.log('📍 Ubicación obtenida:', coords);
+                        
+                        // Guardar coordenadas en campo oculto
+                        document.getElementById(campo + '_coords').value = coords;
+                        
+                        // Mostrar coordenadas en el input de forma amigable
+                        const inputField = document.getElementById(campo);
+                        inputField.value = `📍 Mi ubicación actual`;
+                        inputField.dataset.coords = coords; // Guardar coords en data attribute
+                        inputField.style.background = '#dcfce7';
+                        inputField.style.borderColor = '#10b981';
+                        inputField.readOnly = true; // Evitar que editen
+                        
+                        mostrarMensaje('✅ Ubicación obtenida correctamente', 'success');
+                        
+                        setTimeout(() => {
+                            inputField.style.background = '#dcfce7';
+                            inputField.style.borderColor = '#10b981';
+                        }, 2000);
+                    },
+                    function(error) {
+                        console.error('Error de geolocalización:', error);
+                        mostrarMensaje('❌ No se pudo obtener la ubicación: ' + error.message, 'error');
+                    }
+                );
+            };
+
+            // Limpiar campo y permitir escribir dirección manual
+            window.limpiarCampo = function(campo) {
+                const inputField = document.getElementById(campo);
+                const coordsField = document.getElementById(campo + '_coords');
+                
+                inputField.value = '';
+                inputField.readOnly = false;
+                inputField.style.background = '#f8fafc';
+                inputField.style.borderColor = '#e2e8f0';
+                inputField.dataset.coords = '';
+                coordsField.value = '';
+                
+                inputField.focus();
+                mostrarMensaje('✅ Campo limpiado. Puedes escribir una dirección', 'success');
+            };
+
+            // ========== CÁLCULO AUTOMÁTICO DE DISTANCIA ==========
+            const btnCalcular = document.getElementById('btnCalcularDistancia');
+            const inputOrigen = document.getElementById('origen');
+            const inputDestino = document.getElementById('destino');
+            const inputCiudad = document.getElementById('ciudad');
+            const inputKm = document.getElementById('kilometros_recorridos');
+            const resultadoDiv = document.getElementById('resultadoDistancia');
+            const infoDiv = document.getElementById('infoDistancia');
+
+            if (btnCalcular) {
+                btnCalcular.addEventListener('click', async function() {
+                    let origen = inputOrigen.value.trim();
+                    let destino = inputDestino.value.trim();
+                    const ciudad = inputCiudad.value.trim();
+
+                    // Validar campos básicos
+                    if (!origen || !destino) {
+                        mostrarMensaje('⚠️ Por favor ingresa origen y destino', 'warning');
+                        return;
+                    }
+
+                    // Obtener coordenadas si existen
+                    const origenCoords = document.getElementById('origen_coords').value.trim();
+                    const destinoCoords = document.getElementById('destino_coords').value.trim();
+
+                    // Preparar origen
+                    if (origenCoords) {
+                        // Usar coordenadas GPS
+                        origen = origenCoords;
+                        console.log('🎯 Usando coordenadas GPS para origen:', origen);
+                    } else {
+                        // Usar dirección + ciudad
+                        if (!ciudad) {
+                            mostrarMensaje('⚠️ Por favor selecciona la ciudad', 'warning');
+                            return;
+                        }
+                        // Limpiar emoji si existe
+                        origen = origen.replace(/📍/g, '').trim();
+                        if (origen.toLowerCase() !== 'mi ubicación actual') {
+                            origen = `${origen}, ${ciudad}`;
+                        } else {
+                            mostrarMensaje('⚠️ Error con la ubicación. Intenta capturarla de nuevo.', 'error');
+                            return;
+                        }
+                        console.log('📍 Usando dirección para origen:', origen);
+                    }
+
+                    // Preparar destino
+                    if (destinoCoords) {
+                        // Usar coordenadas GPS
+                        destino = destinoCoords;
+                        console.log('🎯 Usando coordenadas GPS para destino:', destino);
+                    } else {
+                        // Usar dirección + ciudad
+                        if (!ciudad) {
+                            mostrarMensaje('⚠️ Por favor selecciona la ciudad', 'warning');
+                            return;
+                        }
+                        // Limpiar emoji si existe
+                        destino = destino.replace(/📍/g, '').trim();
+                        if (destino.toLowerCase() !== 'mi ubicación actual') {
+                            destino = `${destino}, ${ciudad}`;
+                        } else {
+                            mostrarMensaje('⚠️ Error con la ubicación. Intenta capturarla de nuevo.', 'error');
+                            return;
+                        }
+                        console.log('📍 Usando dirección para destino:', destino);
+                    }
+
+                    // Cambiar botón a estado de carga
+                    btnCalcular.disabled = true;
+                    btnCalcular.innerHTML = '<span style="font-size: 18px;">⏳</span> Calculando distancia...';
+
+                    try {
+                        console.log('🌐 Calculando distancia entre:', { origen, destino });
+                        
+                        // Llamar a la API de Distance Matrix
+                        const resultado = await DistanceMatrixUtil.calcularDistanciaDirecciones(origen, destino);
+
+                        if (resultado.success) {
+                            console.log('✅ Resultado:', resultado);
+                            
+                            // Mostrar resultado
+                            resultadoDiv.style.display = 'block';
+                            infoDiv.innerHTML = `
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div>
+                                        <strong>📏 Distancia:</strong> ${resultado.distancia.texto}
+                                    </div>
+                                    <div>
+                                        <strong>⏱️ Tiempo estimado:</strong> ${resultado.duracion.texto}
+                                    </div>
+                                </div>
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #93c5fd;">
+                                    <strong>🎯 Kilómetros:</strong> ${resultado.distancia.kilometros} km
+                                </div>
+                            `;
+
+                            // ✅ AUTOCOMPLETAR EL CAMPO DE KILÓMETROS
+                            inputKm.value = resultado.distancia.kilometros;
+                            inputKm.style.background = '#dcfce7';
+                            inputKm.style.borderColor = '#10b981';
+                            inputKm.style.fontWeight = '600';
+
+                            mostrarMensaje('✅ Distancia calculada: ' + resultado.distancia.kilometros + ' km', 'success');
+
+                            // Hacer scroll al campo de kilómetros
+                            inputKm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                            // Restaurar estilo después de 3 segundos
+                            setTimeout(() => {
+                                inputKm.style.background = '#f8fafc';
+                                inputKm.style.borderColor = '#e2e8f0';
+                                inputKm.style.fontWeight = 'normal';
+                            }, 3000);
+                        }
+                    } catch (error) {
+                        console.error('❌ Error al calcular distancia:', error);
+                        mostrarMensaje('❌ ' + error.message, 'error');
+                        resultadoDiv.style.display = 'none';
+                    } finally {
+                        // Restaurar botón
+                        btnCalcular.disabled = false;
+                        btnCalcular.innerHTML = '<span style="font-size: 18px;">🗺️</span> Calcular Distancia Automáticamente';
+                    }
+                });
             }
         });
     </script>
