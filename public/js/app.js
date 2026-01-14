@@ -315,4 +315,116 @@ window.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Inicializar indicador de conexión
+    inicializarIndicadorConexion();
 });
+
+// ===================================
+// INDICADOR DE ESTADO DE CONEXIÓN Y SINCRONIZACIÓN
+// ===================================
+
+function inicializarIndicadorConexion() {
+    // Crear el indicador si no existe
+    let indicador = document.getElementById('indicadorConexion');
+    if (!indicador) {
+        indicador = document.createElement('div');
+        indicador.id = 'indicadorConexion';
+        indicador.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        `;
+        document.body.appendChild(indicador);
+    }
+    
+    // Actualizar estado inicial
+    actualizarIndicadorConexion();
+    
+    // Escuchar eventos de conexión
+    window.addEventListener('online', actualizarIndicadorConexion);
+    window.addEventListener('offline', actualizarIndicadorConexion);
+    window.addEventListener('cambioConexion', actualizarIndicadorConexion);
+    
+    // Escuchar mensajes del Service Worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data.type === 'SYNC_COMPLETE') {
+                actualizarIndicadorConexion();
+                mostrarMensaje('✓ Datos sincronizados correctamente', 'success');
+            }
+        });
+    }
+    
+    // Actualizar contador cada 10 segundos
+    setInterval(actualizarIndicadorConexion, 10000);
+    
+    // Click en el indicador para forzar sincronización
+    indicador.addEventListener('click', async () => {
+        if (navigator.onLine && typeof offlineManager !== 'undefined') {
+            indicador.innerHTML = '🔄 <span>Sincronizando...</span>';
+            try {
+                await offlineManager.sincronizarTodo();
+                setTimeout(actualizarIndicadorConexion, 1000);
+            } catch (error) {
+                console.error('Error al sincronizar:', error);
+                actualizarIndicadorConexion();
+            }
+        }
+    });
+}
+
+async function actualizarIndicadorConexion() {
+    const indicador = document.getElementById('indicadorConexion');
+    if (!indicador) return;
+    
+    const online = navigator.onLine;
+    let pendientes = 0;
+    
+    // Obtener contador de pendientes si está disponible
+    if (typeof offlineManager !== 'undefined') {
+        try {
+            pendientes = await offlineManager.obtenerContadorPendientes();
+        } catch (error) {
+            console.error('Error al obtener pendientes:', error);
+        }
+    }
+    
+    if (online) {
+        if (pendientes > 0) {
+            // En línea con datos pendientes
+            indicador.style.background = '#ffc107';
+            indicador.innerHTML = `🔄 <span>${pendientes} pendiente(s)</span>`;
+            indicador.title = 'Click para sincronizar ahora';
+        } else {
+            // En línea sin datos pendientes
+            indicador.style.background = '#28a745';
+            indicador.innerHTML = '✓ <span>Conectado</span>';
+            indicador.title = 'Conexión activa';
+        }
+    } else {
+        // Sin conexión
+        indicador.style.background = '#dc3545';
+        indicador.innerHTML = '📴 <span>Sin conexión</span>';
+        indicador.title = 'Trabajando offline';
+        if (pendientes > 0) {
+            indicador.innerHTML = `📴 <span>Sin conexión (${pendientes})</span>`;
+        }
+    }
+}
+
+// Exportar funciones globales
+window.actualizarIndicadorConexion = actualizarIndicadorConexion;

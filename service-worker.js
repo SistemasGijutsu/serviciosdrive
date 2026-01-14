@@ -1,9 +1,17 @@
-const CACHE_NAME = 'serviciosdrive-v1';
+const CACHE_NAME = 'serviciosdrive-v2';
 const urlsToCache = [
   '/serviciosdrive/public/index.php',
+  '/serviciosdrive/public/dashboard.php',
+  '/serviciosdrive/public/registrar-servicio.php',
+  '/serviciosdrive/public/registrar-gasto.php',
+  '/serviciosdrive/public/historial.php',
+  '/serviciosdrive/public/historial-gastos.php',
   '/serviciosdrive/public/css/styles.css',
   '/serviciosdrive/public/js/app.js',
   '/serviciosdrive/public/js/login.js',
+  '/serviciosdrive/public/js/servicio.js',
+  '/serviciosdrive/public/js/gasto.js',
+  '/serviciosdrive/public/js/offline-manager.js',
   '/serviciosdrive/manifest.json'
 ];
 
@@ -77,15 +85,133 @@ self.addEventListener('fetch', event => {
 
 // Sincronización en segundo plano (para futuras funcionalidades)
 self.addEventListener('sync', event => {
-  if (event.tag === 'sync-data') {
-    event.waitUntil(syncData());
+  if (event.tag === 'sync-offline-data') {
+    event.waitUntil(syncOfflineData());
   }
 });
 
-function syncData() {
-  // Implementar lógica de sincronización
-  console.log('Service Worker: Sincronizando datos...');
-  return Promise.resolve();
+async function syncOfflineData() {
+  console.log('Service Worker: Sincronizando datos offline...');
+  
+  try {
+    // Abrir IndexedDB
+    const db = await openDatabase();
+    
+    // Sincronizar gastos
+    const gastos = await getUnsyncedRecords(db, 'gastosOffline');
+    for (const gasto of gastos) {
+      try {
+        await syncGasto(gasto);
+        await markAsSynced(db, 'gastosOffline', gasto.id);
+      } catch (error) {
+        console.error('Error al sincronizar gasto:', error);
+      }
+    }
+    
+    // Sincronizar servicios
+    const servicios = await getUnsyncedRecords(db, 'serviciosOffline');
+    for (const servicio of servicios) {
+      try {
+        await syncServicio(servicio);
+        await markAsSynced(db, 'serviciosOffline', servicio.id);
+      } catch (error) {
+        console.error('Error al sincronizar servicio:', error);
+      }
+    }
+    
+    console.log('✓ Sincronización completada');
+    
+    // Notificar a todos los clientes
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({ type: 'SYNC_COMPLETE' });
+    });
+    
+  } catch (error) {
+    console.error('Error en sincronización:', error);
+    throw error;
+  }
+}
+
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ServiciosDriveDB', 1);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getUnsyncedRecords(db, storeName) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([storeName], 'readonly');
+    const store = transaction.objectStore(storeName);
+    const index = store.index('sincronizado');
+    const request = index.getAll(false);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function markAsSynced(db, storeName, id) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([storeName], 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const getRequest = store.get(id);
+    
+    getRequest.onsuccess = () => {
+      const record = getRequest.result;
+      if (record) {
+        record.sincronizado = true;
+        record.fechaSincronizacion = new Date().toISOString();
+        const updateRequest = store.put(record);
+        updateRequest.onsuccess = () => resolve();
+        updateRequest.onerror = () => reject(updateRequest.error);
+      } else {
+        resolve();
+      }
+    };
+    
+    getRequest.onerror = () => reject(getRequest.error);
+  });
+}
+
+async function syncGasto(gasto) {
+  const formData = new FormData();
+  Object.keys(gasto).forEach(key => {
+    if (key !== 'id' && key !== 'timestamp' && key !== 'sincronizado' && 
+        key !== 'fechaCreacion' && key !== 'fechaSincronizacion') {
+      formData.append(key, gasto[key]);
+    }
+  });
+
+  const response = await fetch('/serviciosdrive/public/api/gasto.php?action=crear', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) throw new Error('Error al sincronizar gasto');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.mensaje);
+}
+
+async function syncServicio(servicio) {
+  const formData = new URLSearchParams();
+  Object.keys(servicio).forEach(key => {
+    if (key !== 'id' && key !== 'timestamp' && key !== 'sincronizado' && 
+        key !== 'fechaCreacion' && key !== 'fechaSincronizacion') {
+      formData.append(key, servicio[key]);
+    }
+  });
+
+  const response = await fetch('/serviciosdrive/public/index.php?action=registrar_servicio', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) throw new Error('Error al sincronizar servicio');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message);
 }
 
 // Notificaciones push (para futuras funcionalidades)

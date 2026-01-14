@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', function() {
             btnGuardar.innerHTML = '<span>⏳ Guardando...</span>';
             
             try {
+                // Verificar si hay conexión
+                if (!navigator.onLine) {
+                    // Guardar offline con imagen en base64
+                    await guardarGastoOffline(formData);
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = textoOriginal;
+                    return;
+                }
+                
                 // Enviar como FormData para incluir la imagen
                 const response = await fetch(APP_URL + '/public/api/gasto.php?action=crear', {
                     method: 'POST',
@@ -272,4 +281,61 @@ function obtenerEtiquetaGasto(tipoGasto) {
     };
     
     return etiquetas[tipoGasto] || tipoGasto;
+}
+
+/**
+ * Guardar gasto offline cuando no hay conexión
+ */
+async function guardarGastoOffline(formData) {
+    if (typeof offlineManager === 'undefined') {
+        mostrarMensaje('El sistema offline no está disponible', 'error');
+        return;
+    }
+    
+    // Convertir FormData a objeto
+    const gastoData = {};
+    for (let [key, value] of formData.entries()) {
+        if (key === 'imagen_comprobante' && value instanceof File && value.size > 0) {
+            // Convertir imagen a base64 para guardar offline
+            try {
+                const base64 = await fileToBase64(value);
+                gastoData[key] = base64;
+            } catch (error) {
+                console.error('Error al convertir imagen:', error);
+                // Continuar sin la imagen
+            }
+        } else {
+            gastoData[key] = value;
+        }
+    }
+    
+    try {
+        await offlineManager.guardarGastoOffline(gastoData);
+        
+        // Limpiar formulario
+        document.getElementById('formRegistrarGasto').reset();
+        
+        // Mostrar mensaje de éxito
+        mostrarMensaje('📴 Gasto guardado offline. Se enviará cuando vuelva la conexión.', 'warning');
+        
+        // Redirigir después de 2 segundos
+        setTimeout(() => {
+            window.location.href = APP_URL + '/public/historial-gastos.php';
+        }, 2000);
+    } catch (error) {
+        console.error('Error al guardar gasto offline:', error);
+        mostrarMensaje('Error al guardar offline: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Convertir File a Base64
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
 }

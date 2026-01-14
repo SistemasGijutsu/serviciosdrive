@@ -307,6 +307,7 @@ $etiquetasGasto = [
         const APP_URL = '<?= APP_URL ?>';
     </script>
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
+    <script src="<?= APP_URL ?>/public/js/offline-manager.js"></script>
     <script src="<?= APP_URL ?>/public/js/gasto.js"></script>
     <script>
         // Inicializar funcionalidad de eliminar

@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', function() {
             setButtonLoading(btnSubmit, true);
             
             try {
+                // Verificar si hay conexión
+                if (!navigator.onLine) {
+                    // Guardar servicio offline
+                    await guardarServicioOffline(formData);
+                    setButtonLoading(btnSubmit, false);
+                    return;
+                }
+                
                 const response = await fetch(this.action, {
                     method: 'POST',
                     body: new URLSearchParams(formData)
@@ -140,3 +148,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+/**
+ * Guardar servicio offline cuando no hay conexión
+ */
+async function guardarServicioOffline(formData) {
+    if (typeof offlineManager === 'undefined') {
+        mostrarMensaje('El sistema offline no está disponible', 'error');
+        return;
+    }
+    
+    // Convertir FormData a objeto
+    const servicioData = {};
+    for (let [key, value] of formData.entries()) {
+        servicioData[key] = value;
+    }
+    
+    try {
+        await offlineManager.guardarServicioOffline(servicioData);
+        
+        // Limpiar formulario
+        const form = document.getElementById('formNuevoServicio') || document.getElementById('formRegistrarServicio');
+        if (form) form.reset();
+        
+        // Mostrar mensaje de éxito
+        mostrarMensaje('📴 Servicio guardado offline. Se enviará cuando vuelva la conexión.', 'warning');
+        
+        // Redirigir después de 1.5 segundos
+        setTimeout(() => {
+            window.location.href = APP_URL + '/public/dashboard.php';
+        }, 1500);
+    } catch (error) {
+        console.error('Error al guardar servicio offline:', error);
+        mostrarMensaje('Error al guardar offline: ' + error.message, 'error');
+    }
+}

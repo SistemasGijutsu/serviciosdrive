@@ -297,6 +297,7 @@
 
     <script src="<?php echo APP_URL; ?>/public/js/config.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/app.js"></script>
+    <script src="<?php echo APP_URL; ?>/public/js/offline-manager.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/turnos.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/servicio.js"></script>
     <script>

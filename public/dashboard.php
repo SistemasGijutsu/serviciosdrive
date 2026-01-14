@@ -562,6 +562,7 @@ if (!$esAdmin && isset($_SESSION['usuario_id'])) {
     
     <script src="<?= APP_URL ?>/public/js/config.js"></script>
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
+    <script src="<?= APP_URL ?>/public/js/offline-manager.js"></script>
     <script src="<?= APP_URL ?>/public/js/servicio.js"></script>
     <script src="<?= APP_URL ?>/public/js/turnos.js"></script>
     <script>
