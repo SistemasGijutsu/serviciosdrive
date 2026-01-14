@@ -26,6 +26,9 @@
             </div>
         </div>
         
+        <!-- Contenedor para gestión de turnos (en sidebar para conductores) -->
+        <div id="turnoContainer" class="turno-container-sidebar"></div>
+        
         <nav class="sidebar-nav">
             <a href="<?php echo APP_URL; ?>/public/dashboard.php" class="nav-link">
                 <span class="nav-icon">📊</span>
@@ -157,6 +160,7 @@
         </div>
     </main>
 
+    <script src="<?php echo APP_URL; ?>/public/js/turnos.js"></script>
     <script src="<?php echo APP_URL; ?>/public/js/app.js"></script>
     <script>
         document.getElementById('sidebarToggle').addEventListener('click', function() {

@@ -96,6 +96,9 @@ $etiquetasGasto = [
             </div>
         </div>
         
+        <!-- Contenedor para gestión de turnos (en sidebar para conductores) -->
+        <div id="turnoContainer" class="turno-container-sidebar"></div>
+        
         <nav class="sidebar-nav">
             <a href="<?= APP_URL ?>/public/dashboard.php" class="nav-link">
                 <span class="nav-icon">📊</span>
@@ -347,5 +350,6 @@ $etiquetasGasto = [
             }
         }
     </script>
+    <script src="<?= APP_URL ?>/public/js/turnos.js"></script>
 </body>
 </html>

@@ -131,6 +131,11 @@ if (!$esAdmin) {
             </div>
         </div>
         
+        <?php if (!$esAdmin): ?>
+        <!-- Contenedor para gestión de turnos (en sidebar para conductores) -->
+        <div id="turnoContainer" class="turno-container-sidebar"></div>
+        <?php endif; ?>
+        
         <nav class="sidebar-nav">
             <a href="<?= APP_URL ?>/public/dashboard.php" class="nav-link">
                 <span class="nav-icon">📊</span>
@@ -615,5 +620,6 @@ if (!$esAdmin) {
             filePreview.style.display = 'none';
         }
     </script>
+    <script src="<?= APP_URL ?>/public/js/turnos.js"></script>
 </body>
 </html>

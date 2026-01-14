@@ -44,6 +44,11 @@ $esAdmin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2;
             </div>
         </div>
         
+        <?php if (!$esAdmin): ?>
+        <!-- Contenedor para gestión de turnos (en sidebar para conductores) -->
+        <div id="turnoContainer" class="turno-container-sidebar"></div>
+        <?php endif; ?>
+        
         <nav class="sidebar-nav">
             <a href="<?= APP_URL ?>/public/dashboard.php" class="nav-link">
                 <span class="nav-icon">📊</span>
@@ -263,5 +268,6 @@ $esAdmin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 2;
             });
         });
     </script>
+    <script src="<?= APP_URL ?>/public/js/turnos.js"></script>
 </body>
 </html>
