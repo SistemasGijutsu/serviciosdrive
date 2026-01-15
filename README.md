@@ -177,57 +177,123 @@ serviciosdrive/
 
 ### Requisitos Previos
 
-- XAMPP instalado con:
-  - PHP 7.4 o superior
-  - MySQL 5.7 o superior
-  - Apache configurado en puerto 8080
+- PHP 7.4 o superior
+- MySQL 5.7 o superior  
+- Servidor web (Apache/Nginx)
+- Para local: XAMPP, WAMP o similar
 
 ### Pasos de Instalación
 
-1. **Clonar o copiar el proyecto** en la carpeta de XAMPP:
+1. **Clonar o copiar el proyecto**:
    ```bash
+   # Para servidor de producción
+   git clone [url-del-repositorio] /ruta/web/
+   
+   # Para desarrollo local (XAMPP)
    cd c:\xampp\htdocs\
-   # Copiar la carpeta serviciosdrive aquí
+   git clone [url-del-repositorio] serviciosdrive
    ```
 
-2. **Iniciar XAMPP**:
-   - Abrir XAMPP Control Panel
-   - Iniciar Apache
-   - Iniciar MySQL
+2. **Configurar archivo de entorno**:
+
+   **Para desarrollo local:**
+   ```bash
+   # Copiar el archivo de ejemplo
+   cp .env.example .env
+   ```
+   
+   Editar `.env` con tus credenciales locales:
+   ```env
+   APP_ENV=local
+   APP_DEBUG=true
+   APP_URL=http://localhost:8080/serviciosdrive
+   
+   DB_HOST=localhost
+   DB_NAME=serviciosdrive_db
+   DB_USER=root
+   DB_PASSWORD=
+   ```
+   
+   **Para producción:**
+   ```bash
+   cp .env.production .env
+   ```
+   
+   Editar `.env` con las credenciales de producción:
+   ```env
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://tudominio.com
+   
+   DB_HOST=localhost
+   DB_NAME=serviciosdrive_db
+   DB_USER=tu_usuario_db
+   DB_PASSWORD=tu_contraseña_segura
+   ```
 
 3. **Crear la base de datos**:
+   
+   **Opción A - Desde terminal:**
+   ```bash
+   mysql -u tu_usuario -p < sql/database.sql
+   mysql -u tu_usuario -p < sql/database_tipificaciones.sql
+   mysql -u tu_usuario -p < sql/database_turnos.sql
+   mysql -u tu_usuario -p < sql/update_gastos_tabla.sql
+   mysql -u tu_usuario -p < sql/update_tiempo_espera.sql
+   ```
+   
+   **Opción B - phpMyAdmin:**
    - Abrir phpMyAdmin: `http://localhost/phpmyadmin`
    - Crear nueva base de datos: `serviciosdrive_db`
-   - Importar el archivo `database.sql` o ejecutar el script SQL
+   - Importar los archivos SQL en orden:
+     1. `database.sql`
+     2. `database_tipificaciones.sql`
+     3. `database_turnos.sql`
+     4. `update_gastos_tabla.sql`
+     5. `update_tiempo_espera.sql`
 
-4. **Configurar credenciales** (si es necesario):
-   - Editar `config/config.php`
-   - Ajustar DB_USER y DB_PASS según tu configuración de MySQL
-
-5. **Generar passwords para usuarios de prueba**:
-   ```php
-   // Ejecutar este código PHP para generar el hash
-   echo password_hash('admin123', PASSWORD_DEFAULT);
-   // Reemplazar en la tabla usuarios el campo password
+4. **Configurar permisos** (Linux/Mac):
+   ```bash
+   chmod -R 755 public/uploads/gastos/
+   chown -R www-data:www-data public/uploads/gastos/
    ```
+   
+   En Windows con XAMPP: asegurarse de que la carpeta tenga permisos de escritura.
+
+5. **Verificar la instalación**:
+   - Local: `http://localhost:8080/serviciosdrive/public/`
+   - Producción: `https://tudominio.com/public/`
+
+### ⚠️ Importante para Producción
+
+1. **Nunca subir el archivo `.env` a Git** (ya está en .gitignore)
+2. **Crear el `.env` directamente en el servidor** con las credenciales de producción
+3. **Verificar que `APP_DEBUG=false`** en producción
+4. **Usar HTTPS** en producción (configurar certificado SSL)
+5. **Restringir permisos** de archivos en el servidor
 
 ## ⚙️ Configuración
 
-### Archivo config.php
+### Variables de Entorno
 
-```php
-// Configuración de la base de datos
-define('DB_HOST', 'localhost');
-define('DB_PORT', '3306');
-define('DB_NAME', 'serviciosdrive_db');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+La aplicación usa un archivo `.env` para configuración. Variables disponibles:
 
-// URL de la aplicación
-define('APP_URL', 'http://localhost:8080/serviciosdrive');
-```
+| Variable | Descripción | Ejemplo Local | Ejemplo Producción |
+|----------|-------------|---------------|-------------------|
+| `APP_ENV` | Entorno de la aplicación | `local` | `production` |
+| `APP_DEBUG` | Modo debug | `true` | `false` |
+| `APP_NAME` | Nombre de la aplicación | `ServiciosDrive` | `ServiciosDrive` |
+| `APP_URL` | URL base de la aplicación | `http://localhost:8080/serviciosdrive` | `https://tudominio.com` |
+| `DB_HOST` | Host de la base de datos | `localhost` | `localhost` |
+| `DB_PORT` | Puerto MySQL | `3306` | `3306` |
+| `DB_NAME` | Nombre de la base de datos | `serviciosdrive_db` | `serviciosdrive_db` |
+| `DB_USER` | Usuario de MySQL | `root` | `nome1978` |
+| `DB_PASSWORD` | Contraseña de MySQL | `` (vacío) | `tu_contraseña` |
+| `DB_CHARSET` | Charset de la BD | `utf8mb4` | `utf8mb4` |
+| `TIMEZONE` | Zona horaria | `America/Mexico_City` | `America/Mexico_City` |
+| `SESSION_LIFETIME` | Duración de sesión (segundos) | `2592000` (30 días) | `2592000` |
 
-### Configurar Apache en puerto 8080
+### Configurar Apache en puerto 8080 (XAMPP Local)
 
 1. Editar `c:\xampp\apache\conf\httpd.conf`
 2. Buscar `Listen 80` y cambiar a `Listen 8080`

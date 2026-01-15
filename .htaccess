@@ -12,13 +12,20 @@
     # Evitar acceso directo a carpetas sensibles
     RewriteRule ^config/ - [F,L]
     RewriteRule ^app/ - [F,L]
+    RewriteRule ^sql/ - [F,L]
 </IfModule>
 
 # Evitar listado de directorios
 Options -Indexes
 
 # Protección de archivos sensibles
-<FilesMatch "^(config\.php|Database\.php|\.htaccess)$">
+<FilesMatch "^(\.env|\.env\..*|config\.php|Database\.php|\.htaccess|\.git.*|composer\.json|composer\.lock|package\.json)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Bloquear acceso a archivos SQL y logs
+<FilesMatch "\.(sql|log|md)$">
     Order Allow,Deny
     Deny from all
 </FilesMatch>
@@ -35,8 +42,11 @@ Options -Indexes
     ExpiresByType image/jpeg "access plus 1 year"
     ExpiresByType image/gif "access plus 1 year"
     ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
     ExpiresByType text/css "access plus 1 month"
     ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 
 # Seguridad
@@ -52,4 +62,12 @@ Options -Indexes
     
     # Referrer Policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Protección adicional contra inyección
+<IfModule mod_rewrite.c>
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|[|%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|[|%[0-9A-Z]{0,2})
+    RewriteRule .* - [F,L]
 </IfModule>

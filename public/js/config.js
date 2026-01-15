@@ -3,7 +3,27 @@
  */
 
 // Detectar la URL base de la aplicación automáticamente
-const APP_BASE_URL = window.location.origin + '/serviciosdrive';
+// Funciona tanto en local (localhost:8080/serviciosdrive) como en producción (tudominio.com)
+function detectBaseUrl() {
+    const path = window.location.pathname;
+    const segments = path.split('/').filter(s => s);
+    
+    // Si estamos en /serviciosdrive/public/... extraer serviciosdrive
+    // Si estamos en /public/... no agregar nada
+    // Si estamos en raíz, no agregar nada
+    
+    if (segments.includes('serviciosdrive')) {
+        return window.location.origin + '/serviciosdrive';
+    } else if (segments.includes('public')) {
+        // Estamos en /public directamente (producción)
+        return window.location.origin;
+    } else {
+        // Raíz del dominio
+        return window.location.origin;
+    }
+}
+
+const APP_BASE_URL = detectBaseUrl();
 
 /**
  * Obtener URL completa para endpoints de API

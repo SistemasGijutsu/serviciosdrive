@@ -1,23 +1,33 @@
-# Archivos de configuración sensibles
-config/config.php
+# Archivos de entorno con credenciales sensibles
+.env
+.env.production
+.env.local
 
-# Archivos temporales
+# Uploads con contenido de usuarios
+public/uploads/gastos/*
+!public/uploads/gastos/.gitkeep
+
+# Archivos temporales y logs
 *.log
 *.tmp
 *.bak
 
 # Directorio de vendor (si usas Composer)
 vendor/
+composer.lock
 
 # Archivos del sistema
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
 # Node modules (si usas npm)
 node_modules/
+package-lock.json
