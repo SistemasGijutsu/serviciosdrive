@@ -63,10 +63,24 @@ function env($key, $default = null) {
     return $value;
 }
 
-// Cargar variables de entorno
-$envPath = __DIR__ . '/../.env';
+// Cargar variables de entorno según el ambiente
+// Detectar si estamos en producción SOLO por el dominio
+$isProduction = false;
+
+if (isset($_SERVER['HTTP_HOST'])) {
+    $host = $_SERVER['HTTP_HOST'];
+    // Detectar si es el dominio de producción
+    if (strpos($host, 'driverservices.softsiga.com') !== false || 
+        strpos($host, '198.96.88.54') !== false) {
+        $isProduction = true;
+    }
+}
+
+// Cargar el archivo de entorno correspondiente
+$envPath = $isProduction ? __DIR__ . '/../.env.production' : __DIR__ . '/../.env';
+
 if (!loadEnv($envPath)) {
-    die("Error: No se pudo cargar el archivo .env. Por favor, copia .env.example a .env y configura tus credenciales.");
+    die("Error: No se pudo cargar el archivo de configuración ($envPath). Por favor, verifica que el archivo exista.");
 }
 
 // Configurar las cookies de sesión ANTES de iniciar la sesión

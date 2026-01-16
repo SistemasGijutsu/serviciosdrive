@@ -63,6 +63,7 @@
         </div>
     </div>
     
+    <script src="<?= APP_URL ?>/public/js/config.js"></script>
     <script src="<?= APP_URL ?>/public/js/app.js"></script>
     <script src="<?= APP_URL ?>/public/js/login.js"></script>
 </body>

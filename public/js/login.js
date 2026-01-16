@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     formData.append('password', password);
                     formData.append('step', '1');
                     
-                    const response = await fetch('/serviciosdrive/public/index.php?action=login', {
+                    const response = await fetch(getApiUrl('index.php?action=login'), {
                         method: 'POST',
                         body: formData
                     });
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     formData.append('vehiculo_id', vehiculoId);
                     formData.append('step', '2');
                     
-                    const response = await fetch('/serviciosdrive/public/index.php?action=login', {
+                    const response = await fetch(getApiUrl('index.php?action=login'), {
                         method: 'POST',
                         body: formData
                     });
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     formData.append('turno_id', turnoId);
                     formData.append('step', '3');
                     
-                    const response = await fetch('/serviciosdrive/public/index.php?action=login', {
+                    const response = await fetch(getApiUrl('index.php?action=login'), {
                         method: 'POST',
                         body: formData
                     });
@@ -374,7 +374,7 @@ function mostrarModalTurnoActivo(turnoInfo) {
             const formData = new URLSearchParams();
             formData.append('observaciones', 'Turno cerrado desde login para iniciar nuevo turno');
             
-            const response = await fetch('/serviciosdrive/public/index.php?action=finalizar_turno_activo', {
+            const response = await fetch(getApiUrl('index.php?action=finalizar_turno_activo'), {
                 method: 'POST',
                 body: formData
             });
