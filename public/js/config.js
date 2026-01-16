@@ -8,19 +8,20 @@ function detectBaseUrl() {
     const path = window.location.pathname;
     const segments = path.split('/').filter(s => s);
     
-    // Si estamos en /serviciosdrive/public/... extraer serviciosdrive
-    // Si estamos en /public/... no agregar nada
-    // Si estamos en raíz, no agregar nada
-    
-    if (segments.includes('serviciosdrive')) {
-        return window.location.origin + '/serviciosdrive';
-    } else if (segments.includes('public')) {
-        // Estamos en /public directamente (producción)
-        return window.location.origin;
-    } else {
-        // Raíz del dominio
+    // Si estamos en producción con dominio directo (driverservices.softsiga.com)
+    // las rutas ya comienzan con /public/ directamente
+    if (window.location.hostname.includes('driverservices.softsiga.com') || 
+        window.location.hostname === '198.96.88.54') {
         return window.location.origin;
     }
+    
+    // Si estamos en /serviciosdrive/public/... extraer serviciosdrive (local)
+    if (segments.includes('serviciosdrive')) {
+        return window.location.origin + '/serviciosdrive';
+    } 
+    
+    // Raíz del dominio (producción o desarrollo sin subdirectorio)
+    return window.location.origin;
 }
 
 const APP_BASE_URL = detectBaseUrl();

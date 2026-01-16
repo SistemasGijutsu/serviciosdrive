@@ -48,7 +48,7 @@ $etiquetasGasto = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Gastos - Sistema de Control Vehicular</title>
     <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
-    <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
+    <link rel="manifest" href="<?= APP_URL ?>/public/manifest.json">
     <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/icons/apple-touch-icon.svg">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">

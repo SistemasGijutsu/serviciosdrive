@@ -3,7 +3,13 @@
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/serviciosdrive/service-worker.js')
+        // Detectar la ruta correcta del service worker
+        const swPath = window.location.hostname.includes('driverservices.softsiga.com') || 
+                       window.location.hostname === '198.96.88.54'
+                       ? '/public/service-worker.js'
+                       : '/serviciosdrive/public/service-worker.js';
+        
+        navigator.serviceWorker.register(swPath)
             .then(registration => {
                 console.log('Service Worker registrado:', registration.scope);
             })

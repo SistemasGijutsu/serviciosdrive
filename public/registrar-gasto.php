@@ -40,7 +40,7 @@ if (!$esAdmin) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Gasto - Sistema de Control Vehicular</title>
     <link rel="stylesheet" href="<?= APP_URL ?>/public/css/styles.css">
-    <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
+    <link rel="manifest" href="<?= APP_URL ?>/public/manifest.json">
     <meta name="theme-color" content="#2563eb">
     <style>
         .expense-types-grid {

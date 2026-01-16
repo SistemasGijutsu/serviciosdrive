@@ -3,11 +3,16 @@
 # Habilitar rewrite engine
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /serviciosdrive/
     
-    # Redirigir a HTTPS (descomentar en producción)
-    # RewriteCond %{HTTPS} off
-    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    # Detectar automáticamente la base
+    # En producción (driverservices.softsiga.com) usará /
+    # En local (localhost/serviciosdrive) usará /serviciosdrive/
+    # RewriteBase detecta automáticamente basándose en el REQUEST_URI
+    
+    # Redirigir a HTTPS en producción
+    RewriteCond %{HTTP_HOST} ^driverservices\.softsiga\.com$ [NC]
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     
     # Evitar acceso directo a carpetas sensibles
     RewriteRule ^config/ - [F,L]
